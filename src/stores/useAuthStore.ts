@@ -28,6 +28,7 @@ import { api } from '@/lib/axios';
 import { logger } from '@/lib/logger';
 import { queryClient } from '@/lib/queryClient';
 import { authRateLimiter } from '@/lib/rateLimiter';
+import { useCartStore } from '@/stores/useCartStore';
 import type {
     User,
     AuthResult,
@@ -98,6 +99,36 @@ const isTokenExpiringSoon = (token: string): boolean => {
         return true;
     }
 };
+
+/** Merge the guest cart (kept in localStorage by `useCartStore`) into the
+ *  authenticated user's server cart. Called immediately after every flow
+ *  that transitions the app from logged-out to logged-in — login, Google
+ *  login, email confirmation — so items added before signing in are not
+ *  silently dropped when the cart UI switches from `localItems` to the
+ *  server-backed query. Failure leaves `localItems` intact so the user
+ *  doesn't lose their cart if the merge call drops; success clears the
+ *  guest cart and invalidates the server-cart query to force a refetch. */
+async function mergeGuestCartIntoServer(): Promise<void> {
+    const cartStore = useCartStore.getState();
+    const guestItems = cartStore.localItems;
+    if (guestItems.length === 0) return;
+
+    const payload = {
+        items: guestItems.map((i) => ({
+            product_id: i.product_id,
+            variant_id: i.variant_id,
+            quantity: i.quantity,
+        })),
+    };
+
+    try {
+        await api.post(API_ROUTES.cartMerge, payload);
+        cartStore.clearLocalCart();
+        await queryClient.invalidateQueries({ queryKey: ['cart'] });
+    } catch (error) {
+        logger.error('Guest cart merge failed', error);
+    }
+}
 
 /** FE-2: module-level promise gate. Concurrent callers awaiting a fresh
  *  access token share this single in-flight refresh request instead of each
@@ -209,6 +240,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
                 _accessToken: data.access,
             });
 
+            await mergeGuestCartIntoServer();
+
             return 'success';
         } catch (error: unknown) {
             // Record failed attempt for rate limiting
@@ -285,6 +318,8 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
                 confirmEmailToken: null,
                 _accessToken: data.access,
             });
+
+            await mergeGuestCartIntoServer();
 
             toast.success('Sesión iniciada correctamente');
             return 'success';
@@ -543,12 +578,14 @@ export const useAuthStore = create<AuthStore>()((set, get) => ({
                 if (data.user) {
                     storage.setUser(data.user);
                     set({ isLogged: true, isLoading: false, _accessToken: data.access });
+                    await mergeGuestCartIntoServer();
                     toast.success(AUTH_MESSAGES.email_confirmed_and_logged_in);
                 } else {
                     logger.warn(
                         'No user data in confirmation response. Setting logged in but user may need to fetch profile.',
                     );
                     set({ isLogged: true, isLoading: false, _accessToken: data.access });
+                    await mergeGuestCartIntoServer();
                     toast.success(AUTH_MESSAGES.email_confirmed_and_logged_in);
                 }
             } else {

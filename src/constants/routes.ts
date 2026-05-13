@@ -106,6 +106,7 @@ export const API_ROUTES = {
     cartItemDetail: (id: number) => `/api/cart/items/${id}/`,
     cartItemDelete: (id: number) => `/api/cart/items/${id}/delete/`,
     cartClear: '/api/cart/clear/',
+    cartMerge: '/api/cart/merge/',
     checkout: '/api/checkout/',
     orders: '/api/orders/',
     orderDetail: (orderNumber: string) => `/api/orders/${orderNumber}/`,
