@@ -112,12 +112,27 @@ export function OrderListPage() {
                                                 </span>
                                             </TableCell>
                                             <TableCell>
-                                                <Link
-                                                    to={buildRoute.orderDetail(order.order_number)}
-                                                    className={styles.viewLink}
-                                                >
-                                                    {t('orders_view')}
-                                                </Link>
+                                                <div className={styles.actions}>
+                                                    {order.status === 'pending' &&
+                                                        order.payment_status === 'unpaid' && (
+                                                            <Link
+                                                                to={buildRoute.checkoutPay(
+                                                                    order.order_number,
+                                                                )}
+                                                                className={styles.payLink}
+                                                            >
+                                                                {t('orders_pay_now')}
+                                                            </Link>
+                                                        )}
+                                                    <Link
+                                                        to={buildRoute.orderDetail(
+                                                            order.order_number,
+                                                        )}
+                                                        className={styles.viewLink}
+                                                    >
+                                                        {t('orders_view')}
+                                                    </Link>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );

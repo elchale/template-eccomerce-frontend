@@ -64,6 +64,7 @@ export interface OrderListItem {
     id: number;
     order_number: string;
     status: OrderStatus;
+    payment_status?: PaymentStatus;
     total: string;
     item_count: number;
     created: string;

@@ -1,11 +1,11 @@
-import { ArrowLeft } from '@phosphor-icons/react';
+import { ArrowLeft, CreditCard, WarningCircle } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 
 import { useOrderDetail } from '@/api';
 import { Spinner, StatusBadge, Button } from '@/components/ui';
 import { ORDER_STATUS_STEPS } from '@/constants/orders';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, buildRoute } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 import styles from './OrderDetailPage.module.css';
@@ -70,6 +70,40 @@ export function OrderDetailPage() {
                 </div>
                 <StatusBadge status={order.status} />
             </div>
+
+            {/* Unpaid CTA — surfaces a resume-payment path for any pending
+                order that hasn't been paid yet. Bails on status changes
+                (cancelled / paid / refunded) so we don't urge the user to
+                pay something they can no longer pay. */}
+            {order.status === 'pending' && order.payment_status === 'unpaid' && (
+                <section className={styles.unpaidBanner} role="region" aria-live="polite">
+                    <div className={styles.unpaidContent}>
+                        <WarningCircle
+                            size={28}
+                            weight="fill"
+                            className={styles.unpaidIcon}
+                            aria-hidden="true"
+                        />
+                        <div className={styles.unpaidText}>
+                            <p className={styles.unpaidTitle}>
+                                {t('order_detail_unpaid_title')}
+                            </p>
+                            <p className={styles.unpaidSubtitle}>
+                                {t('order_detail_unpaid_subtitle', {
+                                    amount: formatCurrency(order.total),
+                                })}
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        to={buildRoute.checkoutPay(order.order_number)}
+                        className={styles.unpaidCta}
+                    >
+                        <CreditCard size={18} weight="bold" aria-hidden="true" />
+                        {t('order_detail_pay_now')}
+                    </Link>
+                </section>
+            )}
 
             {/* Status Timeline */}
             {order.status !== 'cancelled' && (

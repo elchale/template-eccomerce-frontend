@@ -47,6 +47,13 @@
     color: var(--color-text);
 }
 
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
 .viewLink {
     padding: var(--spacing-xs) var(--spacing-md);
     font-size: var(--text-sm);
@@ -61,4 +68,23 @@
 .viewLink:hover {
     color: var(--color-text-inverse);
     background: var(--color-primary);
+}
+
+/* "Pagar" CTA shown only for pending + unpaid orders — primary colour + filled
+ * to draw the eye, sits ahead of "Ver" so the resume-payment action is the
+ * default click target. */
+.payLink {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-inverse);
+    text-decoration: none;
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-base);
+}
+
+.payLink:hover {
+    background: var(--color-primary-hover, var(--color-primary));
+    filter: brightness(0.95);
 }
