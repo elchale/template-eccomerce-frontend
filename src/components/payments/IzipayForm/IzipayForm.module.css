@@ -32,13 +32,19 @@
     /* Krypton injects its own styles; we just provide a stable mount point */
 }
 
-/* ── Secure note footer ────────────────────────────────────────────────────── */
-
-.secureNote {
-    display: flex;
-    gap: var(--spacing-xs);
-    align-items: center;
-    margin: 0;
-    font-size: var(--text-sm);
-    color: var(--color-text-muted);
+/* Krypton's rendered smart-form ships with a max-width that collapses the
+ * card form to a narrow column flush-left inside the parent. Stretch every
+ * level of its container chain to the full parent width so the form fills
+ * the payment card. The selectors target Krypton's globally-classed nodes
+ * (`.kr-smart-form`, `.kr-embedded`) and its top-level wrappers — these
+ * exist outside CSS-module scope so we reach them via `:global`. */
+.formContainer :global(.kr-smart-form),
+.formContainer :global(.kr-embedded),
+.formContainer :global(.kr-smart-form-wrapper),
+.formContainer :global(.kr-smart-form > div),
+.formContainer :global(.kr-payment-button) {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }

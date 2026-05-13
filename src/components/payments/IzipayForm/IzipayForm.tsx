@@ -1,5 +1,4 @@
 import KRGlue from '@lyracom/embedded-form-glue';
-import { LockKey } from '@phosphor-icons/react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -141,7 +140,9 @@ export function IzipayForm({ formToken, onSuccess, onError }: IzipayFormProps) {
                 </div>
             )}
 
-            {/* Krypton smart-form container — hidden until ready */}
+            {/* Krypton smart-form container — hidden until ready.
+                The "secure payment" footer is rendered by the parent page so
+                it isn't duplicated below the form. */}
             <div
                 id="izipay-form"
                 className={styles.formContainer}
@@ -151,14 +152,6 @@ export function IzipayForm({ formToken, onSuccess, onError }: IzipayFormProps) {
                 {/* Krypton replaces this element with the secure card form */}
                 <div className="kr-smart-form" />
             </div>
-
-            {/* Secure payment footer */}
-            {!!ready && (
-                <p className={styles.secureNote}>
-                    <LockKey size={14} weight="bold" aria-hidden="true" />
-                    {t('payment_secure_note')}
-                </p>
-            )}
         </div>
     );
 }
