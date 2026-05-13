@@ -1,0 +1,404 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 50;
+    background: var(--color-bg-overlay);
+    box-shadow: 0 1px 0 var(--color-border);
+    backdrop-filter: blur(var(--blur-lg));
+    transition: transform var(--transition-slow);
+}
+
+.navbar.hidden {
+    transform: translateY(-100%);
+}
+
+.inner {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--container-max-width);
+    height: var(--navbar-height);
+    padding: 0 var(--spacing-lg);
+    margin: 0 auto;
+}
+
+/* ── Logo ── */
+.logo {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--spacing-xs);
+    align-items: center;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.logoImg {
+    width: auto;
+    height: 28px;
+}
+
+.logoText {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: var(--tracking-tight);
+}
+
+/* ── Search Bar ── */
+.searchBar {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    max-width: 600px;
+    height: 40px;
+    padding: 0 0 0 var(--spacing-sm);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base);
+}
+
+.searchBarHidden {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.searchBar:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.searchIcon {
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--color-text-muted);
+}
+
+.searchInput {
+    flex: 1;
+    min-width: 0;
+    padding: 0 var(--spacing-xs);
+    font-size: var(--text-md);
+    color: var(--color-text);
+    outline: none;
+    background: transparent;
+    border: none;
+}
+
+.searchInput::placeholder {
+    color: var(--color-text-muted);
+}
+
+.searchClear {
+    min-width: unset;
+    min-height: unset;
+    padding: 0 var(--spacing-xs);
+    font-size: 18px;
+    line-height: 1;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.searchClear:hover {
+    color: var(--color-text);
+}
+
+.searchSubmit {
+    flex-shrink: 0;
+    min-width: unset;
+    height: 100%;
+    min-height: unset;
+    padding: 0 var(--spacing-md);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-inverse);
+    cursor: pointer;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 0 var(--radius-full) var(--radius-full) 0;
+    transition: background-color var(--transition-base);
+}
+
+.searchSubmit:hover {
+    background-color: var(--color-primary-hover);
+}
+
+/* ── Right Actions ── */
+.actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--spacing-xxs);
+    align-items: center;
+}
+
+.iconButton {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-width: unset;
+    height: 36px;
+    min-height: unset;
+    padding: 0;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    transition:
+        color var(--transition-base),
+        background-color var(--transition-base);
+}
+
+.iconButton:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-subtle);
+}
+
+.cartButton {
+    position: relative;
+}
+
+.cartBadge {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-text-inverse);
+    background: var(--color-error);
+    border-radius: var(--radius-full);
+    animation: cartBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cartBounce {
+    0% {
+        transform: scale(0);
+    }
+
+    60% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.userAvatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-inverse);
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    box-shadow: 0 0 0 2px var(--color-primary-subtle);
+}
+
+/* ── Mobile toggle ── */
+.mobileToggle {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-width: unset;
+    height: 36px;
+    min-height: unset;
+    padding: 0;
+    color: var(--color-text);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+}
+
+/* ── Mobile controls (cart + hamburger) ── */
+.mobileControls {
+    display: none;
+    flex-shrink: 0;
+    gap: var(--spacing-xxs);
+    align-items: center;
+}
+
+/* ── Mobile search (second row) ── */
+.mobileSearch {
+    display: none;
+}
+
+/* ── Mobile menu overlay ── */
+.mobileOverlay {
+    display: none;
+}
+
+/* ── Mobile menu ── */
+.mobileMenu {
+    display: none;
+}
+
+/* ── Drawer search ── */
+.drawerSearch {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    height: 40px;
+    padding: 0 var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+}
+
+.drawerSearch:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.mobileLink {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+}
+
+.mobileLink:hover {
+    color: var(--color-text);
+    background: var(--color-bg-subtle);
+}
+
+.mobileLinkActive {
+    font-weight: 600;
+    color: var(--color-primary);
+    background: var(--color-primary-subtle);
+}
+
+.mobileAuth {
+    padding: var(--spacing-md);
+    margin-top: auto;
+}
+
+.mobileAuth button {
+    width: 100%;
+}
+
+.mobileLanguage {
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-top: auto;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ── Responsive ── */
+
+@media (width <= 900px) {
+    .searchSubmit {
+        padding: 0 var(--spacing-sm);
+    }
+}
+
+@media (width <= 768px) {
+    .inner {
+        height: 52px;
+        padding: 0 var(--spacing-sm);
+    }
+
+    .searchBar {
+        display: none;
+    }
+
+    .actions {
+        display: none;
+    }
+
+    .mobileControls {
+        display: flex;
+    }
+
+    .mobileToggle {
+        display: flex;
+    }
+
+    .mobileSearch {
+        display: flex;
+        align-items: center;
+        height: 40px;
+        padding: 0 var(--spacing-sm);
+        margin: 0 var(--spacing-sm) var(--spacing-xs);
+        background: var(--color-bg-subtle);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-full);
+    }
+
+    .mobileSearch:focus-within {
+        border-color: var(--color-primary);
+    }
+
+    .mobileOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 99;
+        display: block;
+        background: rgb(0 0 0 / 30%);
+    }
+
+    .mobileMenu {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        width: 280px;
+        padding: var(--spacing-xl) var(--spacing-sm) var(--spacing-sm);
+        overflow-y: auto;
+        background: var(--color-bg);
+        box-shadow: var(--theme-drawer-shadow);
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mobileMenuOpen {
+        transform: translateX(0);
+    }
+}
+
+@media (width <= 480px) {
+    .logoText {
+        font-size: var(--text-md);
+    }
+
+    .logoImg {
+        height: 24px;
+    }
+}

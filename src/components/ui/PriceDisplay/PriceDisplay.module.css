@@ -1,0 +1,46 @@
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: baseline;
+}
+
+.price {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.discounted {
+    color: var(--color-error);
+}
+
+.comparePrice {
+    font-weight: 400;
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+}
+
+/* Sizes */
+.sm .price {
+    font-size: var(--text-md);
+}
+
+.sm .comparePrice {
+    font-size: var(--text-sm);
+}
+
+.md .price {
+    font-size: var(--text-lg);
+}
+
+.md .comparePrice {
+    font-size: var(--text-md);
+}
+
+.lg .price {
+    font-size: var(--text-xl);
+}
+
+.lg .comparePrice {
+    font-size: var(--text-lg);
+}

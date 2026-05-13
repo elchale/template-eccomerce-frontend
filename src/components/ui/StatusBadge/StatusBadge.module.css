@@ -1,0 +1,39 @@
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--spacing-xs);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+}
+
+.pending {
+    color: var(--color-warning);
+    background-color: var(--color-warning-bg);
+}
+
+.confirmed {
+    color: var(--color-info);
+    background-color: var(--color-info-bg);
+}
+
+.processing {
+    color: var(--color-primary);
+    background-color: var(--color-primary-subtle);
+}
+
+.shipped {
+    color: var(--color-primary);
+    background-color: var(--color-primary-subtle);
+}
+
+.delivered {
+    color: var(--color-success);
+    background-color: var(--color-success-bg);
+}
+
+.cancelled {
+    color: var(--color-error);
+    background-color: var(--color-error-bg);
+}

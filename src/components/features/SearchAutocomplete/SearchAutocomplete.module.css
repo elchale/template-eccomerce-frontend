@@ -1,0 +1,131 @@
+.container {
+    position: relative;
+    width: 100%;
+}
+
+.form {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: var(--spacing-sm);
+    color: var(--color-text-muted);
+    pointer-events: none;
+}
+
+.input {
+    width: 100%;
+    height: var(--size-md);
+    padding: 0 var(--spacing-xl) 0 var(--spacing-2xl);
+    font-size: var(--text-md);
+    color: var(--color-text);
+    outline: none;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-full);
+    transition:
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast);
+}
+
+.input:focus {
+    border-color: var(--color-input-border-focus);
+    box-shadow: 0 0 0 3px rgb(0 128 96 / 12%);
+}
+
+.input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.clearBtn {
+    position: absolute;
+    right: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    min-width: unset;
+    height: 24px;
+    min-height: unset;
+    padding: 0;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-full);
+    transition: color var(--transition-fast);
+}
+
+.clearBtn:hover {
+    color: var(--color-text);
+}
+
+.dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    z-index: var(--z-dropdown);
+    max-height: 360px;
+    overflow: hidden;
+    overflow-y: auto;
+    list-style: none;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.loadingItem,
+.emptyItem {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.suggestionItem {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.suggestionItem:hover,
+.active {
+    background: var(--color-bg-subtle);
+}
+
+.thumbnail {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.suggestionText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.suggestionName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    white-space: nowrap;
+}
+
+.suggestionPrice {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-primary);
+}

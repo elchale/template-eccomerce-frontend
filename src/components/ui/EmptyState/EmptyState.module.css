@@ -1,0 +1,53 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-2xl) var(--spacing-md);
+    text-align: center;
+    animation: fadeInUp 0.4s ease;
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--icon-2xl);
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-subtle);
+    border-radius: var(--radius-full);
+}
+
+.title {
+    margin: 0 0 var(--spacing-xs);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.message {
+    max-width: 400px;
+    margin: 0 0 var(--spacing-lg);
+    font-size: var(--text-md);
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+}
+
+.action {
+    margin-top: var(--spacing-xs);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

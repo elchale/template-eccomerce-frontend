@@ -1,0 +1,416 @@
+/* DateTimePicker Component Styles */
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xxs);
+}
+
+.group.full-width {
+    width: 100%;
+}
+
+/* Label placement */
+.group.label-placement-outside {
+    flex-direction: column;
+}
+
+.group.label-placement-outside-left {
+    flex-direction: row;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+/* Handle the floating outside label container height */
+.group.has-floating-outside-label {
+    position: relative;
+
+    /* Add top margin to maintain the same height as if the label was outside */
+    padding-top: calc(var(--text-md) + var(--spacing-md));
+}
+
+@media (width <= 768px) {
+    .group.label-placement-outside-left {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        align-items: flex-start;
+    }
+}
+
+.label {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+}
+
+.requiredMark {
+    color: var(--color-error);
+}
+
+.field {
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--spacing-sm);
+    font-family: inherit;
+    font-weight: inherit;
+    line-height: 1.5;
+    color: var(--color-text);
+    outline: none;
+    border-style: solid;
+    border-width: var(--border-width-sm);
+    transition: all 0.2s ease;
+}
+
+/* Variant Styles - Match Input component */
+.field.variantFlat {
+    background-color: var(--color-bg-subtle);
+    border-color: var(--color-bg-subtle);
+}
+
+.field.variantBordered {
+    background-color: transparent;
+    border: var(--border-width-sm) solid var(--color-border);
+}
+
+.field.variantFaded {
+    background-color: var(--color-bg-subtle);
+    border: var(--border-width-sm) solid var(--color-border);
+}
+
+.field.variantUnderlined {
+    background-color: transparent;
+    border: none;
+    border-bottom: var(--border-width-sm) solid var(--color-border);
+    border-radius: 0;
+}
+
+/* Sizes - Match Input component exactly */
+.field.sizeSm {
+    height: var(--size-sm);
+    padding-right: var(--spacing-sm);
+    padding-left: var(--spacing-sm);
+    font-size: var(--text-sm);
+}
+
+.field.sizeMd {
+    height: var(--size-md);
+    font-size: var(--text-md);
+}
+
+.field.sizeLg {
+    height: var(--size-lg);
+    font-size: var(--text-lg);
+}
+
+/* Radius */
+.field.radiusNone {
+    border-radius: var(--radius-none);
+}
+
+.field.radiusSm {
+    border-radius: var(--radius-sm);
+}
+
+.field.radiusMd {
+    border-radius: var(--radius-md);
+}
+
+.field.radiusLg {
+    border-radius: var(--radius-lg);
+}
+
+.field.radiusFull {
+    border-radius: var(--radius-full);
+}
+
+/* Hover state */
+.field:hover:not(:disabled) {
+    border-color: var(--color-border-strong) !important;
+}
+
+/* Focus state */
+.field:focus,
+.field:focus-visible {
+    outline: none;
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* Disabled state */
+.field:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Color variants */
+.field.colorDefault:focus,
+.field.colorDefault:focus-visible {
+    border-color: var(--color-text-secondary) !important;
+    box-shadow: 0 0 0 1px var(--color-text-secondary);
+}
+
+.field.colorPrimary {
+    border-color: var(--color-primary);
+}
+
+.field.colorPrimary:focus,
+.field.colorPrimary:focus-visible {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.field.colorSecondary {
+    border-color: var(--color-secondary);
+}
+
+.field.colorSecondary:focus,
+.field.colorSecondary:focus-visible {
+    border-color: var(--color-secondary) !important;
+    box-shadow: 0 0 0 1px var(--color-secondary);
+}
+
+.field.colorSuccess {
+    border-color: var(--color-success);
+}
+
+.field.colorSuccess:focus,
+.field.colorSuccess:focus-visible {
+    border-color: var(--color-success) !important;
+    box-shadow: 0 0 0 1px var(--color-success);
+}
+
+.field.colorWarning {
+    border-color: var(--color-warning);
+}
+
+.field.colorWarning:focus,
+.field.colorWarning:focus-visible {
+    border-color: var(--color-warning) !important;
+    box-shadow: 0 0 0 1px var(--color-warning);
+}
+
+.field.colorDanger {
+    border-color: var(--color-error);
+}
+
+.field.colorDanger:focus,
+.field.colorDanger:focus-visible {
+    border-color: var(--color-error) !important;
+    box-shadow: 0 0 0 1px var(--color-error);
+}
+
+/* Error states */
+.field.inputInvalid,
+.field.inputInvalid:focus {
+    color: var(--color-error);
+    border-color: var(--color-error) !important;
+}
+
+/* Container with floating label */
+.inputContainer {
+    position: relative;
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    width: 100%;
+}
+
+.inputContainer.with-floating-label {
+    margin-top: var(--spacing-sm);
+}
+
+/* Inside label styling */
+.inputLabel {
+    position: absolute;
+    left: var(--spacing-sm);
+    z-index: 1;
+    margin: 0;
+    color: var(--color-text);
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.insideLabel {
+    top: 50%;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    transform: translateY(-50%);
+}
+
+.insideLabel.floating {
+    top: calc(var(--spacing-xs));
+    font-size: var(--text-xs);
+    transform: translateY(0);
+}
+
+/* Floating outside label styles */
+.floatingOutsideLabel {
+    top: 50%;
+    font-size: var(--text-md);
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
+}
+
+.floatingOutsideLabel.float-above {
+    top: calc(-1 * (var(--text-md) + var(--spacing-md)));
+    left: 0;
+    padding: 0 var(--spacing-xxs);
+    font-size: var(--text-sm);
+    background-color: var(--color-bg);
+    transform: translateY(0);
+}
+
+/* Padding adjustments for inside labels */
+.field.has-inside-label {
+    padding-top: calc(var(--spacing-md) + var(--spacing-xs));
+    padding-bottom: 0;
+}
+
+/* Content positioning */
+.startContent {
+    position: absolute;
+    left: var(--spacing-sm);
+    z-index: 2;
+}
+
+.endContent {
+    position: absolute;
+    right: var(--spacing-sm);
+    z-index: 2;
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.field.has-start {
+    padding-left: calc(var(--spacing-md) + 1.25rem) !important;
+}
+
+.field.has-end {
+    padding-right: calc(var(--spacing-md) + 1.25rem) !important;
+}
+
+/* Clear button */
+.clearBtn {
+    position: absolute;
+    right: var(--spacing-sm);
+    z-index: 2;
+    padding: 0;
+    font-size: var(--icon-md);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.clearBtn:hover {
+    color: var(--color-text-secondary);
+}
+
+.errorMsg {
+    margin-top: var(--spacing-xs);
+    font-size: var(--text-sm);
+    color: var(--color-error);
+}
+
+.requiredMark {
+    color: var(--color-error);
+}
+
+/* Content positioning */
+.startContent,
+.endContent {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+}
+
+.startContent.has-inside-label,
+.endContent.has-inside-label {
+    padding-top: calc(var(--spacing-md) + var(--spacing-xs));
+    padding-bottom: 0;
+}
+
+/* DateTime specific styles */
+.field::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.field::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Dark mode support for calendar icon */
+@media (prefers-color-scheme: dark) {
+    .field::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
+}
+
+/* Ensure icon visibility */
+.endContent {
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-sm);
+    z-index: 2;
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    color: var(--color-text-secondary);
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+/* Keep native calendar icon functional but visually transparent */
+.field::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-sm);
+    z-index: 10;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    cursor: pointer;
+    outline: none;
+    background: transparent;
+    border: none;
+    opacity: 0.01;
+    transform: translateY(-50%);
+}
+
+/* Custom calendar icon overlay - positioned behind the invisible native icon */
+.field {
+    position: relative;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right var(--spacing-sm) center;
+    background-size: var(--icon-sm) var(--icon-sm);
+}
+
+.field:hover {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+}
+
+/* Dark mode support for custom icon */
+@media (prefers-color-scheme: dark) {
+    .field {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+    }
+
+    .field:hover {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2366b3ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+    }
+}
+
+/* Disabled state */
+.field:disabled {
+    cursor: not-allowed;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3e%3c/rect%3e%3cline x1='16' y1='2' x2='16' y2='6'%3e%3c/line%3e%3cline x1='8' y1='2' x2='8' y2='6'%3e%3c/line%3e%3cline x1='3' y1='10' x2='21' y2='10'%3e%3c/line%3e%3c/svg%3e");
+}
+
+/* Remove absolute positioning that might be hiding the icon */
+.field {
+    position: relative;
+}

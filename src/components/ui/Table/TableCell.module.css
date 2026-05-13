@@ -1,0 +1,9 @@
+.cell {
+    padding: var(--spacing-sm) var(--spacing-md);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: var(--text-sm);
+    vertical-align: middle;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}

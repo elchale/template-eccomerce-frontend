@@ -1,0 +1,29 @@
+/* FE-6: OfflineBanner — fixed at top of viewport, above all other elements */
+
+.banner {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: var(--z-banner); /* above modals (--z-modal 200) and toasts (--z-toast 300) */
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--color-text-inverse);
+    text-align: center;
+    background-color: var(--color-warning);
+    box-shadow: var(--shadow-md);
+}
+
+.icon {
+    flex-shrink: 0;
+    font-size: var(--text-lg);
+}
+
+.text {
+    line-height: var(--leading-normal);
+}

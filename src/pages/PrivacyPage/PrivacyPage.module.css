@@ -1,0 +1,82 @@
+.page {
+    width: 100%;
+    padding: var(--spacing-2xl) var(--spacing-xl);
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    letter-spacing: var(--tracking-tight);
+}
+
+.updated {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.section h2 {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.section p,
+.section li {
+    margin: 0;
+    font-size: var(--text-base);
+    line-height: 1.7;
+    color: var(--color-text-secondary);
+}
+
+.section ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding-left: var(--spacing-lg);
+}
+
+.section a {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+@media (width <= 576px) {
+    .page {
+        padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    .header h1 {
+        font-size: var(--text-2xl);
+    }
+
+    .section h2 {
+        font-size: var(--text-lg);
+    }
+}

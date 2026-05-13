@@ -1,0 +1,50 @@
+.spinner {
+    width: var(--size-md);
+    height: var(--size-md);
+    margin: var(--spacing-sm) auto;
+    border: var(--border-width-lg) solid transparent;
+    border-radius: var(--radius-full);
+    animation: spin 1s linear infinite;
+}
+
+.primary {
+    border-top-color: var(--color-primary);
+}
+
+.secondary {
+    border-top-color: var(--color-secondary);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.xs {
+    width: var(--size-xxs);
+    height: var(--size-xxs);
+    border-width: var(--border-width-sm);
+}
+
+.sm {
+    width: var(--size-xs);
+    height: var(--size-xs);
+    border-width: var(--border-width-md);
+}
+
+.md {
+    width: var(--size-sm);
+    height: var(--size-sm);
+    border-width: var(--border-width-lg);
+}
+
+.lg {
+    width: var(--size-md);
+    height: var(--size-md);
+    border-width: var(--border-width-xl);
+}

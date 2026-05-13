@@ -1,0 +1,61 @@
+.section {
+    padding: var(--spacing-xl);
+    background: var(--color-urgency-bg);
+}
+
+.header {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+}
+
+.titleGroup {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.fireIcon {
+    color: var(--color-urgency);
+}
+
+.title {
+    font-size: var(--text-xl);
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.scrollRow {
+    display: flex;
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.scrollRow::-webkit-scrollbar {
+    display: none;
+}
+
+.cardSlot {
+    display: flex;
+    flex: 0 0 13.75rem;
+    flex-direction: column;
+    min-width: 0;
+}
+
+@media (width >= 768px) {
+    .cardSlot {
+        flex: 0 0 15rem;
+    }
+}
+
+/* On narrow screens, bleed to page edges */
+@media (width <= 640px) {
+    .section {
+        margin-right: calc(-1 * var(--spacing-xs));
+        margin-left: calc(-1 * var(--spacing-xs));
+    }
+}

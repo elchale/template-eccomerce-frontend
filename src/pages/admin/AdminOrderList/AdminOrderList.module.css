@@ -1,0 +1,68 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.pageTitle {
+    margin: 0;
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.toolbar {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+}
+
+.filterGroup {
+    width: 220px;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+.orderNumber {
+    font-family: monospace;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.viewBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-sm);
+    height: var(--size-sm);
+    font-size: var(--icon-md);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-micro);
+}
+
+.viewBtn:hover {
+    color: var(--color-primary);
+    background-color: var(--color-primary-subtle);
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    padding-top: var(--spacing-md);
+}
+
+@media (width <= 640px) {
+    .filterGroup {
+        width: 100%;
+    }
+}

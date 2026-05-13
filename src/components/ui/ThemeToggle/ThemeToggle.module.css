@@ -1,0 +1,63 @@
+.toggle {
+    --track-width: calc(var(--size-xs) * 2);
+    --track-height: var(--size-xs);
+    --ball-size: calc(var(--size-xs) - var(--border-width-xl));
+    position: relative;
+    padding: 0;
+    cursor: pointer;
+
+    background: none;
+    border: none;
+}
+
+.toggle.sm {
+    --track-width: calc(var(--size-xxs) * 2);
+    --track-height: var(--size-xxs);
+    --ball-size: calc(var(--size-xxs) - var(--border-width-xl));
+}
+
+.toggle.lg {
+    --track-width: calc(var(--size-sm) * 2);
+    --track-height: var(--size-sm);
+    --ball-size: calc(var(--size-sm) - var(--border-width-xl));
+}
+
+.track {
+    position: relative;
+    width: var(--track-width);
+    height: var(--track-height);
+    background-color: var(--color-bg-subtle);
+    border: var(--border-width-sm) solid var(--color-border);
+    border-radius: var(--radius-full);
+    transition: background-color 0.3s ease;
+}
+
+.ball {
+    position: absolute;
+    top: var(--border-width-sm);
+    left: var(--border-width-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ball-size);
+    height: var(--ball-size);
+    background-color: var(--color-text);
+    border-radius: var(--radius-full);
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+}
+
+.icon {
+    width: 60%;
+    height: 60%;
+    color: var(--color-text-inverse);
+}
+
+.toggle[aria-checked="true"] .ball {
+    transform: translateX(calc(var(--track-width) - var(--ball-size) - var(--border-width-xl)));
+}
+
+.toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}

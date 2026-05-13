@@ -1,0 +1,44 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    width: 100%;
+}
+
+/* ── Loading state ─────────────────────────────────────────────────────────── */
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.loadingText {
+    margin: 0;
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+/* ── Form container ────────────────────────────────────────────────────────── */
+
+.formContainer {
+    width: 100%;
+
+    /* Krypton injects its own styles; we just provide a stable mount point */
+}
+
+/* ── Secure note footer ────────────────────────────────────────────────────── */
+
+.secureNote {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}

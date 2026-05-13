@@ -1,0 +1,11 @@
+/**
+ * Font Definitions
+ * Theme-aware: --font-family is set per [data-theme] in themes.css.
+ * Body picks it up via App.css; everything else inherits naturally.
+ *
+ * Inter is loaded by index.html alongside all other theme fonts.
+ */
+
+:root {
+    --line-height-base: 1.5;
+}

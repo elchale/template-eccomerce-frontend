@@ -1,0 +1,119 @@
+.tabs {
+    display: flex;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: var(--border-width-sm) solid var(--black-10);
+}
+
+.tab {
+    position: relative;
+    flex: 1;
+    padding: var(--spacing-sm) 0;
+    font-size: var(--text-lg);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.tab.active {
+    color: var(--color-primary);
+}
+
+.tab.active::after {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: var(--border-width-md);
+    content: "";
+    background: var(--color-primary);
+}
+
+.walletLoginCont {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.walletInfo {
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--black-5);
+    border-radius: var(--radius-md);
+}
+
+.walletInfo p {
+    margin: 0 0 var(--spacing-md);
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+}
+
+.walletInfo p:last-child {
+    margin-bottom: 0;
+}
+
+.walletSupport {
+    font-size: var(--text-md);
+    color: var(--color-text-muted) !important;
+}
+
+.walletConnectBtn {
+    margin-top: var(--spacing-md);
+}
+
+.divider {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    margin: var(--spacing-lg) 0 var(--spacing-md);
+}
+
+.divider::before,
+.divider::after {
+    flex: 1;
+    height: 1px;
+    content: "";
+    background: var(--color-border);
+}
+
+.dividerText {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.submitButton {
+    padding: var(--spacing-sm);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text-inverse);
+    cursor: pointer;
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.3s ease;
+}
+
+.submitButton:hover {
+    background-color: var(--color-secondary);
+}
+
+/* SMALL SCREENS */
+@media (width <= 480px) {
+    /* Slightly reduce spacing */
+    .mainCont {
+        gap: var(--spacing-sm);
+    }
+
+    .adminBtn {
+        top: var(--spacing-sm);
+        left: var(--spacing-sm);
+        padding: var(--spacing-xs) var(--spacing-md);
+    }
+
+    .ransaLogo {
+        width: 120px;
+    }
+}

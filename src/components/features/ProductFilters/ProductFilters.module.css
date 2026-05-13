@@ -1,0 +1,106 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xxs);
+}
+
+.label {
+    margin-bottom: 2px;
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.select {
+    width: 100%;
+    height: var(--size-md);
+    padding: 0 var(--spacing-sm);
+    font-size: var(--text-md);
+    color: var(--color-text);
+    appearance: auto;
+    cursor: pointer;
+    outline: none;
+    background-color: var(--color-input-bg);
+    border: var(--border-width-sm) solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-base);
+}
+
+.select:focus {
+    border-color: var(--color-input-border-focus);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.priceRange {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.priceInput {
+    flex: 1;
+    min-width: 0;
+    height: var(--size-md);
+    padding: 0 var(--spacing-sm);
+    font-size: var(--text-md);
+    color: var(--color-text);
+    outline: none;
+    background-color: var(--color-input-bg);
+    border: var(--border-width-sm) solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-base);
+}
+
+.priceInput:focus {
+    border-color: var(--color-input-border-focus);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.priceInput::placeholder {
+    color: var(--color-text-muted);
+}
+
+.separator {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--color-text-muted);
+}
+
+.checkboxLabel {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+.clearFilter {
+    min-width: unset;
+    min-height: unset;
+    padding: 0;
+    font-size: var(--text-sm);
+    color: var(--color-primary);
+    text-align: left;
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: opacity var(--transition-micro);
+}
+
+.clearFilter:hover {
+    opacity: 0.7;
+}

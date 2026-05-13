@@ -1,0 +1,1 @@
+export { CheckoutPaymentPage } from './CheckoutPaymentPage';

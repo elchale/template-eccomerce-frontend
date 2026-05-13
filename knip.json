@@ -1,0 +1,43 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/__tests__/**/*.{ts,tsx}",
+    "src/api/index.ts",
+    "src/components/**/index.ts",
+    "src/stores/index.ts",
+    "src/hooks/index.ts",
+    "src/constants/index.ts",
+    "src/components/features/BottomNav/BottomNav.tsx",
+    "src/components/features/CategoryCard/CategoryCard.tsx",
+    "src/components/features/SearchAutocomplete/SearchAutocomplete.tsx",
+    "src/pages/Home/Home.tsx",
+    "e2e/**/*.spec.ts"
+  ],
+  "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts"],
+  "ignore": [
+    "src/types/krypton.d.ts",
+    "src/lib/sanitize.ts",
+    "src/lib/rateLimiter.ts",
+    "src/lib/i18n.ts",
+    "src/lib/index.ts",
+    "src/pages/CheckoutPaymentPage/index.ts"
+  ],
+  "ignoreDependencies": ["@types/react-datepicker", "chart.js", "react-chartjs-2"],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "exports": "warn",
+    "types": "warn",
+    "nsExports": "warn",
+    "nsTypes": "warn",
+    "duplicates": "warn",
+    "enumMembers": "warn",
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "unlisted": "error",
+    "binaries": "error",
+    "unresolved": "error"
+  },
+  "vite": { "config": "vite.config.ts" },
+  "vitest": { "config": "vite.config.ts" }
+}

@@ -1,0 +1,37 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 48px repeat(5, 1fr);
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.row:has(.imageCell) {
+    grid-template-columns: 48px repeat(5, 1fr);
+}
+
+.imageCell {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+}
+
+@media (width <= 768px) {
+    .row {
+        grid-template-columns: 40px 1fr 1fr;
+    }
+
+    .row > :nth-child(n + 4) {
+        display: none;
+    }
+}

@@ -1,0 +1,60 @@
+.timer {
+    display: inline-flex;
+    gap: var(--spacing-xxs);
+    align-items: center;
+    font-weight: 700;
+    color: var(--color-urgency);
+}
+
+.unit {
+    display: inline-flex;
+    gap: var(--spacing-xxs);
+    align-items: baseline;
+}
+
+.value {
+    font-variant-numeric: tabular-nums;
+}
+
+.label {
+    font-size: 0.65em;
+    opacity: 0.8;
+}
+
+.separator {
+    margin: 0 var(--spacing-xxs);
+    opacity: 0.6;
+}
+
+.urgent {
+    color: var(--color-urgency);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.expired {
+    color: var(--color-text-muted);
+}
+
+/* Sizes */
+.sm {
+    font-size: var(--text-sm);
+}
+
+.md {
+    font-size: var(--text-md);
+}
+
+.lg {
+    font-size: var(--text-xl);
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}

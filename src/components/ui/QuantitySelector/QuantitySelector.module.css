@@ -1,0 +1,46 @@
+.container {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    border: var(--border-width-sm) solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-sm);
+    height: var(--size-sm);
+    padding: 0;
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text);
+    cursor: pointer;
+    background-color: var(--color-bg-subtle);
+    border: none;
+    transition: background-color 0.15s;
+}
+
+.button:hover:not(:disabled) {
+    background-color: var(--color-bg-muted);
+}
+
+.button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--size-sm);
+    height: var(--size-sm);
+    padding: 0 var(--spacing-xs);
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--color-text);
+    user-select: none;
+    background-color: var(--color-bg);
+}

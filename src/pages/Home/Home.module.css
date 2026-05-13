@@ -1,0 +1,122 @@
+.container {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+    width: 100%;
+    max-width: var(--container-max-width);
+    padding: var(--spacing-xl) var(--spacing-md);
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+/* Header Section */
+.header {
+    padding: var(--spacing-xl) 0;
+    margin-bottom: var(--spacing-xl);
+    color: var(--color-text);
+    text-align: center;
+    background: var(--color-bg-accent);
+    border-radius: var(--radius-xl);
+}
+
+.headerContent {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-md);
+}
+
+.title {
+    margin: 0;
+    font-size: var(--text-3xl);
+    font-weight: 700;
+}
+
+.subtitle {
+    margin: 0;
+    font-size: var(--text-lg);
+    opacity: 0.9;
+}
+
+.headerControls {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+/* Section Styling */
+.section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.showcaseCard {
+    padding: var(--spacing-sm);
+}
+
+/* Component Grid Layouts */
+.componentGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-xl);
+    margin-top: var(--spacing-lg);
+}
+
+.componentGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.componentGroup h4 {
+    margin: 0 0 var(--spacing-md) 0;
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Button Groups */
+.buttonGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+/* Form Grid */
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+    gap: var(--spacing-xl);
+    margin-top: var(--spacing-lg);
+}
+
+.formColumn {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.formColumn h4 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Spinner Group */
+.spinnerGroup {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+/* Paginator */
+.currentPage {
+    margin-top: var(--spacing-md);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    text-align: center;
+}

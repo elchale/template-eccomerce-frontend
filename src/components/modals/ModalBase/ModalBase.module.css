@@ -1,0 +1,124 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-modal-overlay);
+    opacity: 0;
+    backdrop-filter: blur(var(--blur-sm));
+    animation: fadeIn 0.2s ease forwards;
+}
+
+.overlay.closing {
+    animation: fadeOut 0.2s ease forwards;
+}
+
+.content {
+    position: relative;
+    z-index: 100;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    padding: var(--spacing-xl);
+    margin: var(--spacing-xl);
+    overflow-y: auto;
+    background: var(--color-bg);
+    background-color: var(--color-bg);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-xl);
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+    animation: slideIn 0.25s ease forwards;
+    animation-delay: 0.05s;
+}
+
+.overlay.closing .content {
+    animation: slideOut 0.2s ease forwards;
+}
+
+.closeButton {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    min-width: unset;
+    height: 36px;
+    min-height: unset;
+    padding: 0;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
+}
+
+.closeButton:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-subtle);
+}
+
+.closeButton:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+@media (width <= 480px) {
+    .content {
+        width: 100%;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+}

@@ -1,0 +1,49 @@
+.card {
+    padding: var(--spacing-md);
+    background-color: var(--color-bg-subtle);
+    border: none;
+    border-radius: var(--radius-lg);
+}
+
+.header {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.title {
+    margin: 0 0 var(--spacing-xs);
+    font-size: var(--text-md);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.comment {
+    margin: 0 0 var(--spacing-sm);
+    font-size: var(--text-md);
+    line-height: var(--leading-relaxed);
+    color: var(--color-text-secondary);
+}
+
+.footer {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    font-size: var(--text-sm);
+}
+
+.author {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.date {
+    color: var(--color-text-muted);
+}
+
+.footer .author::after {
+    margin-left: var(--spacing-xs);
+    color: var(--color-text-muted);
+    content: "\00b7";
+}

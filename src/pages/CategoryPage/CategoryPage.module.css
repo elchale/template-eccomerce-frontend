@@ -1,0 +1,224 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: calc(100vh - var(--navbar-height));
+}
+
+/* ── Header ── */
+.header {
+    padding: var(--spacing-md) var(--spacing-md);
+    background: var(--color-bg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.headerInner {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+}
+
+.title {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.description {
+    margin: 2px 0 0;
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+}
+
+.headerMeta {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.count {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.filterToggle {
+    display: none;
+    gap: 4px;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.filterToggle:hover {
+    border-color: var(--color-border-strong);
+}
+
+.filterBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--color-text-inverse);
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+}
+
+/* ── Layout ── */
+.layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    width: 100%;
+    max-width: var(--container-max-width);
+    padding: var(--spacing-md);
+    margin: 0 auto;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    position: sticky;
+    top: calc(var(--navbar-height) + var(--spacing-md));
+    align-self: start;
+    max-height: calc(100vh - var(--navbar-height) - 2rem);
+    padding-right: var(--spacing-md);
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+}
+
+/* ── Main ── */
+.main {
+    min-height: 400px;
+    padding-left: var(--spacing-md);
+}
+
+/* ── Product grid — dense ── */
+.productGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+}
+
+/* ── Paginator ── */
+.paginatorContainer {
+    display: flex;
+    justify-content: center;
+    padding-bottom: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+}
+
+/* ── Loading ── */
+.loadingContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+/* ── Mobile filter overlay ── */
+.overlay {
+    display: none;
+}
+
+.mobileFilters {
+    display: none;
+}
+
+.mobileFiltersHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.mobileFiltersHeader h3 {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+
+.mobileFiltersClose {
+    padding: 4px;
+    color: var(--color-text);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+/* ── Responsive ── */
+@media (width <= 1100px) {
+    .productGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (width <= 768px) {
+    .headerInner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .layout {
+        grid-template-columns: 1fr;
+        padding: var(--spacing-xs);
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        padding-left: 0;
+    }
+
+    .filterToggle {
+        display: flex;
+    }
+
+    .overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: block;
+        background: rgb(0 0 0 / 30%);
+    }
+
+    .mobileFilters {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 51;
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+        padding: var(--spacing-md);
+        overflow-y: auto;
+        background: var(--color-bg);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .productGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+    }
+}

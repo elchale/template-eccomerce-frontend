@@ -1,0 +1,129 @@
+.container {
+    max-width: 600px;
+    padding: var(--spacing-xl);
+}
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+
+.title {
+    margin-bottom: var(--spacing-xl);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+.select {
+    height: var(--size-md);
+    padding: 0 var(--spacing-sm);
+    font-size: var(--text-md);
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-input-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.checkboxRow {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.footer {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    padding-top: var(--spacing-md);
+}
+
+.imageSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.imagePreview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.imageUploadRow {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-end;
+}
+
+.imageUploadRow > :first-child {
+    flex: 1;
+}
+
+.uploadBtnWrapper {
+    flex-shrink: 0;
+}
+
+.hiddenInput {
+    display: none;
+}
+
+.uploadHint {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.translationTabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.translationTab {
+    padding: var(--spacing-xs) var(--spacing-md);
+    margin-bottom: -1px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all var(--transition-micro);
+}
+
+.translationTab:hover {
+    color: var(--color-text);
+}
+
+.translationTabActive {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+}

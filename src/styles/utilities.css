@@ -1,0 +1,182 @@
+/**
+ * Utility Classes
+ * Reusable helper classes for layout, typography, and common patterns
+ */
+
+/* ========================================
+   LAYOUT UTILITIES
+   ======================================== */
+
+/* Container - Responsive max-width */
+.container {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    margin: 0 auto;
+}
+
+@media (width >= 576px) {
+    .container {
+        max-width: 540px;
+        padding: 0;
+    }
+}
+
+@media (width >= 768px) {
+    .container {
+        max-width: 720px;
+    }
+}
+
+@media (width >= 992px) {
+    .container {
+        max-width: 960px;
+    }
+}
+
+@media (width >= 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
+@media (width >= 1400px) {
+    .container {
+        max-width: var(--container-max-width);
+    }
+}
+
+/* Centered spinner container */
+.spinner-container {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+/* ========================================
+   TYPOGRAPHY UTILITIES
+   ======================================== */
+
+.bold {
+    font-weight: 700;
+}
+
+.italic {
+    font-style: italic;
+}
+
+/* Section title */
+.section-title {
+    position: relative;
+    left: 50%;
+    display: inline-block;
+    margin-bottom: 2rem;
+    font-size: var(--text-xl);
+    font-weight: 700;
+    text-align: center;
+    transform: translateX(-50%);
+}
+
+/* Text button - simple link style */
+.text-btn {
+    padding: 0;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.text-btn:hover {
+    text-decoration: underline;
+}
+
+/* ========================================
+   TOAST NOTIFICATIONS
+   ======================================== */
+
+.toast-error {
+    color: var(--color-text);
+    text-align: center;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+}
+
+.toast-success {
+    color: var(--color-text);
+    text-align: center;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ========================================
+   FORM UTILITIES
+   ======================================== */
+
+.required-mark {
+    color: var(--color-error);
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-width: 0;
+    clip: rect(0, 0, 0, 0);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

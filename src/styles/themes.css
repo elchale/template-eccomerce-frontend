@@ -1,0 +1,794 @@
+/**
+ * themes.css - Multi-Theme System
+ *
+ * Each html[data-theme="<id>"] block overrides:
+ *   1. Color tokens (bg, text, primary, etc)
+ *   2. Typography (font-family + font-family-display)
+ *   3. Radius scale (--radius-sm ... --radius-2xl)
+ *   4. Theme decorators (--theme-button-*, --theme-heading-*) — see variables.css
+ *   5. Element-level styles (h1-h6) via descendant selectors that beat
+ *      class-level rules in CSS modules thanks to attribute-selector specificity.
+ *
+ * The default (classic) theme matches :root in variables.css. Other themes
+ * change FONT, RADIUS, SHADOWS, BUTTON STYLE and HEADING STYLE so the entire
+ * site personality shifts when the active theme is swapped.
+ */
+
+/* =============================================
+   CLASSIC — modern, balanced (default mirror of :root)
+   ============================================= */
+
+/*
+ * Classic mirrors :root, but :root only applies to <html>. When the picker
+ * renders <div data-theme="classic"> inside an <html data-theme="X"> page,
+ * the div inherits X's values — so classic must redeclare every var another
+ * theme overrides, otherwise the classic preview shows X's colors/radii.
+ */
+html[data-theme="classic"],
+[data-theme="classic"] {
+    /* Backgrounds */
+    --color-bg: #fff;
+    --color-bg-subtle: var(--gray-100);
+    --color-bg-muted: var(--gray-200);
+    --color-bg-inverse: var(--gray-900);
+    --color-bg-overlay: rgb(255 255 255 / 80%);
+    --color-bg-accent: var(--green-brand-50);
+
+    /* Text */
+    --color-text: var(--gray-900);
+    --color-text-secondary: var(--gray-600);
+    --color-text-muted: var(--gray-400);
+    --color-text-inverse: #fff;
+
+    /* Borders */
+    --color-border: var(--gray-200);
+    --color-border-strong: var(--gray-300);
+    --color-border-muted: var(--gray-100);
+
+    /* Brand */
+    --color-primary: var(--green-brand-500);
+    --color-primary-hover: var(--green-brand-600);
+    --color-primary-active: var(--green-brand-700);
+    --color-primary-subtle: var(--green-brand-50);
+    --color-secondary: var(--indigo-500);
+    --color-secondary-hover: var(--indigo-600);
+
+    /* Feedback */
+    --color-error: var(--red-500);
+    --color-error-hover: var(--red-600);
+    --color-error-bg: var(--red-50);
+    --color-warning: var(--yellow-500);
+    --color-warning-hover: var(--yellow-600);
+    --color-warning-bg: var(--yellow-50);
+    --color-success: var(--green-500);
+    --color-success-hover: var(--green-600);
+    --color-success-bg: var(--green-50);
+    --color-info: var(--blue-500);
+    --color-info-hover: var(--blue-600);
+    --color-info-bg: var(--blue-50);
+
+    /* Component */
+    --color-input-bg: #fff;
+    --color-modal-overlay: rgb(0 0 0 / 50%);
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 4%);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 6%), 0 1px 2px rgb(0 0 0 / 4%);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 7%), 0 2px 4px -2px rgb(0 0 0 / 5%);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 8%), 0 4px 6px -4px rgb(0 0 0 / 4%);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 8%), 0 8px 10px -6px rgb(0 0 0 / 4%);
+    --shadow-primary: 0 4px 14px rgb(0 128 96 / 25%);
+    --shadow-card-hover: 0 8px 24px rgb(0 0 0 / 8%), 0 2px 8px rgb(0 0 0 / 4%);
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, var(--green-brand-500), var(--green-brand-600));
+    --gradient-hero: linear-gradient(135deg, #f0faf6 0%, #e6f5ef 50%, #eef2ff 100%);
+
+    /* Typography */
+    --font-family: "Inter", system-ui, -apple-system, sans-serif;
+    --font-family-display: "Inter", system-ui, -apple-system, sans-serif;
+
+    /* Radii */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-full: 9999px;
+
+    /* Decorators */
+    --theme-button-radius: var(--radius-md);
+    --theme-button-text-transform: none;
+    --theme-button-letter-spacing: 0;
+    --theme-button-font-weight: 600;
+    --theme-button-border-width: 0px;
+    --theme-button-border-color: transparent;
+    --theme-button-shadow-rest: none;
+    --theme-button-shadow-hover: var(--shadow-md);
+    --theme-button-translate-hover: -1px;
+    --theme-card-radius: var(--radius-lg);
+    --theme-card-border-width: 1px;
+    --theme-input-radius: var(--radius-md);
+    --theme-chip-radius: var(--radius-full);
+    --theme-chip-border-width: 1px;
+    --theme-chip-border-color: var(--color-border);
+    --theme-chip-text-transform: none;
+    --theme-chip-letter-spacing: 0;
+    --theme-chip-font-weight: 500;
+    --theme-heading-text-transform: none;
+    --theme-heading-letter-spacing: var(--tracking-tight);
+    --theme-heading-font-weight: 700;
+    --theme-drawer-shadow: var(--shadow-xl);
+
+    /* Marketing tokens */
+    --color-urgency: #ff4757;
+    --color-urgency-hover: #ff6b81;
+    --color-urgency-bg: #fff0f0;
+    --color-deal: #ff6b35;
+    --color-deal-bg: #fff4ee;
+    --color-flash: #ffd32a;
+    --color-flash-bg: #fffde6;
+    --color-reward: #a855f7;
+    --color-reward-bg: #f5f0ff;
+    --color-free-shipping: #10b981;
+}
+
+/* =============================================
+   DARK — same skeleton as classic, dark surfaces
+   ============================================= */
+
+html[data-theme="dark"],
+[data-theme="dark"] {
+    /* Backgrounds */
+    --color-bg: #18181b;
+    --color-bg-subtle: #27272a;
+    --color-bg-muted: #3f3f46;
+    --color-bg-inverse: #fafafa;
+    --color-bg-overlay: rgb(24 24 27 / 80%);
+    --color-bg-accent: #0d3025;
+
+    /* Text */
+    --color-text: #fafafa;
+    --color-text-secondary: #d1d1d8;
+    --color-text-muted: #71717a;
+    --color-text-inverse: #18181b;
+
+    /* Borders */
+    --color-border: #3f3f46;
+    --color-border-strong: #52525b;
+    --color-border-muted: #27272a;
+
+    /* Primary */
+    --color-primary: #00a67d;
+    --color-primary-hover: #00b88a;
+    --color-primary-active: #008060;
+    --color-primary-subtle: #0d3025;
+
+    /* Secondary */
+    --color-secondary: #6366f1;
+    --color-secondary-hover: #818cf8;
+
+    /* Feedback */
+    --color-error: #ff6b81;
+    --color-error-hover: #ff8a9c;
+    --color-error-bg: rgb(255 107 129 / 15%);
+    --color-warning: #ffb142;
+    --color-warning-hover: #ffc266;
+    --color-warning-bg: rgb(255 177 66 / 15%);
+    --color-success: #3dd68c;
+    --color-success-hover: #5ddda0;
+    --color-success-bg: rgb(61 214 140 / 15%);
+    --color-info: #4b9eff;
+    --color-info-hover: #6eb0ff;
+    --color-info-bg: rgb(75 158 255 / 15%);
+
+    /* Component */
+    --color-input-bg: #27272a;
+    --color-modal-overlay: rgb(0 0 0 / 70%);
+
+    /* Shadows for dark mode */
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 20%);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 30%), 0 1px 2px rgb(0 0 0 / 20%);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 30%), 0 2px 4px -1px rgb(0 0 0 / 20%);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 30%), 0 4px 6px -2px rgb(0 0 0 / 15%);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 35%), 0 8px 10px -6px rgb(0 0 0 / 20%);
+    --shadow-primary: 0 4px 14px rgb(0 166 125 / 30%);
+    --shadow-card-hover: 0 8px 24px rgb(0 0 0 / 20%), 0 2px 8px rgb(0 0 0 / 15%);
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #00a67d, #008060);
+    --gradient-hero: linear-gradient(135deg, #0d1f1a 0%, #0d3025 50%, #1a1a3e 100%);
+
+    /* Typography */
+    --font-family: "Inter", system-ui, sans-serif;
+    --font-family-display: "Inter", system-ui, sans-serif;
+
+    /* Marketing tokens */
+    --color-urgency: #ff6b81;
+    --color-urgency-hover: #ff8fa3;
+    --color-urgency-bg: rgb(255 71 87 / 15%);
+    --color-deal: #ff8c5a;
+    --color-deal-bg: rgb(255 107 53 / 15%);
+    --color-flash: #ffd32a;
+    --color-flash-bg: rgb(255 211 42 / 15%);
+    --color-reward: #c084fc;
+    --color-reward-bg: rgb(168 85 247 / 15%);
+    --color-free-shipping: #34d399;
+}
+
+/* =============================================
+   ELEGANT — luxury serif, sharp edges, gold accent
+   ============================================= */
+
+html[data-theme="elegant"],
+[data-theme="elegant"] {
+    /* Colors */
+    --color-bg: #faf7f0;
+    --color-bg-subtle: #f2ede0;
+    --color-bg-muted: #e8e0cc;
+    --color-bg-inverse: #1a1410;
+    --color-bg-accent: #f5edd8;
+    --color-bg-overlay: rgb(250 247 240 / 92%);
+    --color-text: #1a1410;
+    --color-text-secondary: #4a3f32;
+    --color-text-muted: #8a7b66;
+    --color-text-inverse: #faf7f0;
+    --color-border: #d8cfb8;
+    --color-border-strong: #b8ac8a;
+    --color-border-muted: #e8e0cc;
+    --color-primary: #8b6914;
+    --color-primary-hover: #a57e1e;
+    --color-primary-active: #6b5010;
+    --color-primary-subtle: #f5edd8;
+    --color-secondary: #4a3f32;
+    --color-secondary-hover: #5a4d3e;
+    --color-input-bg: #fff;
+    --color-modal-overlay: rgb(26 20 16 / 60%);
+    --shadow-primary: 0 2px 12px rgb(139 105 20 / 18%);
+    --gradient-primary: linear-gradient(135deg, #8b6914 0%, #6b5010 100%);
+    --gradient-hero: linear-gradient(135deg, #faf7f0 0%, #f5edd8 50%, #f2ede0 100%);
+
+    /* Typography */
+    --font-family: "Cormorant Garamond", Georgia, serif;
+    --font-family-display: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+
+    /* Sharp luxury edges */
+    --radius-sm: 0px;
+    --radius-md: 2px;
+    --radius-lg: 4px;
+    --radius-xl: 6px;
+    --radius-2xl: 8px;
+    --radius-full: 0px;
+
+    /* Decorators */
+    --theme-button-radius: 0px;
+    --theme-button-text-transform: uppercase;
+    --theme-button-letter-spacing: 0.18em;
+    --theme-button-font-weight: 500;
+    --theme-button-border-width: 1px;
+    --theme-button-border-color: var(--color-text);
+    --theme-button-shadow-rest: none;
+    --theme-button-shadow-hover: 0 6px 20px rgb(139 105 20 / 25%);
+    --theme-button-translate-hover: -2px;
+    --theme-card-radius: 0px;
+    --theme-input-radius: 0px;
+    --theme-chip-radius: 0px;
+    --theme-chip-border-width: 1px;
+    --theme-chip-border-color: var(--color-text);
+    --theme-chip-text-transform: uppercase;
+    --theme-chip-letter-spacing: 0.14em;
+    --theme-chip-font-weight: 500;
+    --theme-heading-text-transform: none;
+    --theme-heading-letter-spacing: -0.01em;
+    --theme-heading-font-weight: 500;
+
+    /* Marketing tokens (warm parchment) */
+    --color-urgency: #b0413e;
+    --color-urgency-bg: #f5e6e2;
+    --color-deal: #c5732d;
+    --color-deal-bg: #f5ead8;
+    --color-flash: #c9a227;
+    --color-flash-bg: #f8f0d6;
+    --color-reward: #6b4fb8;
+    --color-reward-bg: #ece6f5;
+    --color-free-shipping: #4f8c5a;
+}
+
+html[data-theme="elegant"] h1,
+[data-theme="elegant"] h1,
+html[data-theme="elegant"] h2,
+[data-theme="elegant"] h2,
+html[data-theme="elegant"] h3,
+[data-theme="elegant"] h3,
+html[data-theme="elegant"] h4,
+[data-theme="elegant"] h4 {
+    font-family: var(--font-family-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+/* =============================================
+   NATURE — organic, soft rounded, earthy
+   ============================================= */
+
+html[data-theme="nature"],
+[data-theme="nature"] {
+    /* Colors */
+    --color-bg: #faf6ee;
+    --color-bg-subtle: #f1eadc;
+    --color-bg-muted: #e5dbc5;
+    --color-bg-inverse: #1f2d1a;
+    --color-bg-accent: #e8f0e0;
+    --color-bg-overlay: rgb(250 246 238 / 88%);
+    --color-text: #1f2d1a;
+    --color-text-secondary: #52624a;
+    --color-text-muted: #8a8474;
+    --color-text-inverse: #faf6ee;
+    --color-border: #d8cfb8;
+    --color-border-strong: #b8ac8a;
+    --color-border-muted: #e5dbc5;
+    --color-primary: #3f6b3f;
+    --color-primary-hover: #4f7f4f;
+    --color-primary-active: #2f5530;
+    --color-primary-subtle: #e8f0e0;
+    --color-secondary: #8b5a2b;
+    --color-secondary-hover: #a06d3a;
+    --color-input-bg: #fff;
+    --color-modal-overlay: rgb(31 45 26 / 50%);
+    --shadow-primary: 0 6px 18px rgb(63 107 63 / 22%);
+    --gradient-primary: linear-gradient(135deg, #3f6b3f 0%, #2f5530 100%);
+    --gradient-hero: linear-gradient(135deg, #faf6ee 0%, #e8f0e0 50%, #f1eadc 100%);
+
+    /* Typography */
+    --font-family: "Nunito", "Quicksand", system-ui, sans-serif;
+    --font-family-display: "Fraunces", Georgia, serif;
+
+    /* Pebble-rounded everything */
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 22px;
+    --radius-xl: 30px;
+    --radius-2xl: 40px;
+
+    /* Decorators */
+    --theme-button-radius: 999px;
+    --theme-button-text-transform: none;
+    --theme-button-letter-spacing: 0;
+    --theme-button-font-weight: 700;
+    --theme-button-border-width: 0px;
+    --theme-button-shadow-rest: 0 2px 6px rgb(63 107 63 / 15%);
+    --theme-button-shadow-hover: 0 8px 22px rgb(63 107 63 / 28%);
+    --theme-button-translate-hover: -2px;
+    --theme-card-radius: 22px;
+    --theme-input-radius: 14px;
+    --theme-chip-radius: 999px;
+    --theme-chip-border-width: 1px;
+    --theme-chip-border-color: var(--color-border-strong);
+    --theme-chip-text-transform: none;
+    --theme-chip-letter-spacing: 0;
+    --theme-chip-font-weight: 600;
+    --theme-heading-text-transform: none;
+    --theme-heading-letter-spacing: -0.02em;
+    --theme-heading-font-weight: 700;
+
+    /* Marketing tokens (earthy) */
+    --color-urgency: #b85c3e;
+    --color-urgency-bg: #f5e2d8;
+    --color-deal: #c97d43;
+    --color-deal-bg: #f5e8d8;
+    --color-flash: #c9a22d;
+    --color-flash-bg: #f5edd0;
+    --color-reward: #7a5ba8;
+    --color-reward-bg: #ece5f5;
+    --color-free-shipping: #3f6b3f;
+}
+
+html[data-theme="nature"] h1,
+[data-theme="nature"] h1,
+html[data-theme="nature"] h2,
+[data-theme="nature"] h2,
+html[data-theme="nature"] h3,
+[data-theme="nature"] h3 {
+    font-family: var(--font-family-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* =============================================
+   VIBRANT — brutalist pop, hard shadows, UPPERCASE
+   ============================================= */
+
+html[data-theme="vibrant"],
+[data-theme="vibrant"] {
+    /* Colors */
+    --color-bg: #fffcf5;
+    --color-bg-subtle: #fff8e7;
+    --color-bg-muted: #ffebc2;
+    --color-bg-inverse: #000;
+    --color-bg-accent: #ffe8dc;
+    --color-bg-overlay: rgb(255 252 245 / 92%);
+    --color-text: #000;
+    --color-text-secondary: #1a1a1a;
+    --color-text-muted: #6a6a6a;
+    --color-text-inverse: #fffcf5;
+    --color-border: #000;
+    --color-border-strong: #000;
+    --color-border-muted: #d0d0d0;
+    --color-primary: #ff4d1f;
+    --color-primary-hover: #ff6b3f;
+    --color-primary-active: #e53e0f;
+    --color-primary-subtle: #ffe8dc;
+    --color-secondary: #1565ff;
+    --color-secondary-hover: #2e7aff;
+    --color-input-bg: #fff;
+    --color-modal-overlay: rgb(0 0 0 / 70%);
+
+    /* Hard "no-blur" pop shadows */
+    --shadow-xs: 2px 2px 0 #000;
+    --shadow-sm: 3px 3px 0 #000;
+    --shadow-md: 5px 5px 0 #000;
+    --shadow-lg: 7px 7px 0 #000;
+    --shadow-xl: 10px 10px 0 #000;
+    --shadow-primary: 5px 5px 0 #000;
+    --shadow-card-hover: 7px 7px 0 #000;
+    --gradient-primary: linear-gradient(135deg, #ff4d1f 0%, #ffb531 100%);
+    --gradient-hero: linear-gradient(135deg, #fffcf5 0%, #ffe8dc 50%, #ffebc2 100%);
+
+    /* Typography */
+    --font-family: "Archivo", "Inter", system-ui, sans-serif;
+    --font-family-display: "Archivo Black", "Anton", "Bebas Neue", sans-serif;
+
+    /* Crisp 0-2px corners */
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 2px;
+    --radius-xl: 4px;
+    --radius-2xl: 4px;
+
+    /* Decorators */
+    --theme-button-radius: 0px;
+    --theme-button-text-transform: uppercase;
+    --theme-button-letter-spacing: 0.06em;
+    --theme-button-font-weight: 800;
+    --theme-button-border-width: 2px;
+    --theme-button-border-color: #000;
+    --theme-button-shadow-rest: 4px 4px 0 #000;
+    --theme-button-shadow-hover: 2px 2px 0 #000;
+    --theme-button-translate-hover: 2px;
+    --theme-card-radius: 0px;
+    --theme-card-border-width: 2px;
+    --theme-input-radius: 0px;
+    --theme-chip-radius: 0px;
+    --theme-chip-border-width: 2px;
+    --theme-chip-border-color: #000;
+    --theme-chip-text-transform: uppercase;
+    --theme-chip-letter-spacing: 0.04em;
+    --theme-chip-font-weight: 800;
+
+    /* Edge-anchored drawers don't get the brutalist offset shadow —
+     it would project off-screen on the right and read as a black
+     seam on the left. A clean separation works better here. */
+    --theme-drawer-shadow: none;
+    --theme-heading-text-transform: uppercase;
+    --theme-heading-letter-spacing: -0.02em;
+    --theme-heading-font-weight: 900;
+
+    /* Marketing tokens (pop) */
+    --color-urgency: #f36;
+    --color-urgency-bg: #ffe0ea;
+    --color-deal: #ff6b35;
+    --color-deal-bg: #ffe3d6;
+    --color-flash: #ffd32a;
+    --color-flash-bg: #fff6d0;
+    --color-reward: #8b5cf6;
+    --color-reward-bg: #ece0ff;
+    --color-free-shipping: #00c268;
+}
+
+html[data-theme="vibrant"] h1,
+[data-theme="vibrant"] h1,
+html[data-theme="vibrant"] h2,
+[data-theme="vibrant"] h2,
+html[data-theme="vibrant"] h3,
+[data-theme="vibrant"] h3 {
+    font-family: var(--font-family-display);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+}
+
+/* =============================================
+   PASTEL — soft, dreamy, extra rounded
+   ============================================= */
+
+html[data-theme="pastel"],
+[data-theme="pastel"] {
+    /* Colors */
+    --color-bg: #fff6f8;
+    --color-bg-subtle: #fbe9f0;
+    --color-bg-muted: #f5d5e0;
+    --color-bg-inverse: #3d2a35;
+    --color-bg-accent: #f5e1f2;
+    --color-bg-overlay: rgb(255 246 248 / 88%);
+    --color-text: #3d2a35;
+    --color-text-secondary: #6e5765;
+    --color-text-muted: #a38a99;
+    --color-text-inverse: #fff6f8;
+    --color-border: #f0d5e0;
+    --color-border-strong: #d8b5c8;
+    --color-border-muted: #fbe9f0;
+    --color-primary: #b97f9c;
+    --color-primary-hover: #cc92ae;
+    --color-primary-active: #9c6280;
+    --color-primary-subtle: #f5e1f2;
+    --color-secondary: #a8b5e0;
+    --color-secondary-hover: #b8c2e8;
+    --color-input-bg: #fff;
+    --color-modal-overlay: rgb(61 42 53 / 40%);
+    --shadow-sm: 0 2px 8px rgb(185 127 156 / 12%);
+    --shadow-md: 0 6px 18px rgb(185 127 156 / 18%);
+    --shadow-lg: 0 12px 28px rgb(185 127 156 / 22%);
+    --shadow-xl: 0 20px 40px rgb(185 127 156 / 28%);
+    --shadow-primary: 0 8px 22px rgb(185 127 156 / 32%);
+    --shadow-card-hover: 0 12px 30px rgb(185 127 156 / 22%);
+    --gradient-primary: linear-gradient(135deg, #b97f9c 0%, #9c6280 100%);
+    --gradient-hero: linear-gradient(135deg, #fff6f8 0%, #f5e1f2 50%, #e8dcf0 100%);
+
+    /* Typography */
+    --font-family: "Quicksand", "Nunito", system-ui, sans-serif;
+    --font-family-display: "Cormorant Garamond", "Playfair Display", serif;
+
+    /* Bubble-rounded */
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 26px;
+    --radius-xl: 34px;
+    --radius-2xl: 42px;
+
+    /* Decorators */
+    --theme-button-radius: 999px;
+    --theme-button-text-transform: none;
+    --theme-button-letter-spacing: 0.02em;
+    --theme-button-font-weight: 600;
+    --theme-button-border-width: 0px;
+    --theme-button-shadow-rest: 0 4px 12px rgb(185 127 156 / 25%);
+    --theme-button-shadow-hover: 0 8px 22px rgb(185 127 156 / 40%);
+    --theme-button-translate-hover: -2px;
+    --theme-card-radius: 26px;
+    --theme-input-radius: 18px;
+    --theme-chip-radius: 999px;
+    --theme-chip-border-width: 1px;
+    --theme-chip-border-color: var(--color-border-strong);
+    --theme-chip-text-transform: none;
+    --theme-chip-letter-spacing: 0.01em;
+    --theme-chip-font-weight: 600;
+    --theme-heading-text-transform: none;
+    --theme-heading-letter-spacing: -0.01em;
+    --theme-heading-font-weight: 600;
+
+    /* Marketing tokens (pastel) */
+    --color-urgency: #d87095;
+    --color-urgency-bg: #fce4ed;
+    --color-deal: #e08a6b;
+    --color-deal-bg: #fce6dc;
+    --color-flash: #deb85f;
+    --color-flash-bg: #fcf5dc;
+    --color-reward: #a892d6;
+    --color-reward-bg: #efe7fa;
+    --color-free-shipping: #7fb89c;
+}
+
+html[data-theme="pastel"] h1,
+[data-theme="pastel"] h1,
+html[data-theme="pastel"] h2,
+[data-theme="pastel"] h2,
+html[data-theme="pastel"] h3,
+[data-theme="pastel"] h3 {
+    font-family: var(--font-family-display);
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* =============================================
+   TECH — neon cyber, mono headings, glow shadows
+   ============================================= */
+
+html[data-theme="tech"],
+[data-theme="tech"] {
+    /* Colors */
+    --color-bg: #07091a;
+    --color-bg-subtle: #0d1228;
+    --color-bg-muted: #161e3f;
+    --color-bg-inverse: #e8ebff;
+    --color-bg-accent: #1a0f40;
+    --color-bg-overlay: rgb(7 9 26 / 95%);
+    --color-text: #e8ebff;
+    --color-text-secondary: #a8b0d8;
+    --color-text-muted: #6b7299;
+    --color-text-inverse: #07091a;
+    --color-border: #1a2240;
+    --color-border-strong: #2a3460;
+    --color-border-muted: #11172a;
+    --color-primary: #00e0ff;
+    --color-primary-hover: #33e8ff;
+    --color-primary-active: #00b8d6;
+    --color-primary-subtle: #003844;
+    --color-secondary: #a855f7;
+    --color-secondary-hover: #bd78f8;
+    --color-success: #0f8;
+    --color-error: #f36;
+    --color-warning: #ffd93d;
+    --color-info: #00e0ff;
+    --color-input-bg: #0d1228;
+    --color-modal-overlay: rgb(0 0 0 / 85%);
+
+    /* Neon glow shadows */
+    --shadow-xs: 0 0 4px rgb(0 224 255 / 30%);
+    --shadow-sm: 0 0 8px rgb(0 224 255 / 35%);
+    --shadow-md: 0 0 14px rgb(0 224 255 / 40%);
+    --shadow-lg: 0 0 22px rgb(0 224 255 / 50%);
+    --shadow-xl: 0 0 36px rgb(0 224 255 / 55%);
+    --shadow-primary: 0 0 18px rgb(0 224 255 / 65%), 0 0 4px rgb(0 224 255 / 90%);
+    --shadow-card-hover: 0 0 22px rgb(168 85 247 / 45%);
+    --gradient-primary: linear-gradient(135deg, #00e0ff 0%, #a855f7 100%);
+    --gradient-hero: linear-gradient(135deg, #07091a 0%, #1a0f40 50%, #003844 100%);
+
+    /* Typography */
+    --font-family: "Inter", system-ui, sans-serif;
+    --font-family-display: "JetBrains Mono", "Fira Code", "Space Mono", monospace;
+
+    /* Sharp corners */
+    --radius-sm: 0px;
+    --radius-md: 2px;
+    --radius-lg: 4px;
+    --radius-xl: 6px;
+    --radius-2xl: 8px;
+
+    /* Decorators */
+    --theme-button-radius: 2px;
+    --theme-button-text-transform: uppercase;
+    --theme-button-letter-spacing: 0.16em;
+    --theme-button-font-weight: 600;
+    --theme-button-border-width: 1px;
+    --theme-button-border-color: var(--color-primary);
+    --theme-button-shadow-rest: 0 0 0 rgb(0 224 255 / 0%);
+    --theme-button-shadow-hover: 0 0 18px rgb(0 224 255 / 70%), inset 0 0 12px rgb(0 224 255 / 15%);
+    --theme-button-translate-hover: 0;
+    --theme-card-radius: 4px;
+    --theme-input-radius: 2px;
+    --theme-chip-radius: 2px;
+    --theme-chip-border-width: 1px;
+    --theme-chip-border-color: var(--color-primary);
+    --theme-chip-text-transform: uppercase;
+    --theme-chip-letter-spacing: 0.12em;
+    --theme-chip-font-weight: 600;
+    --theme-heading-text-transform: uppercase;
+    --theme-heading-letter-spacing: 0.04em;
+    --theme-heading-font-weight: 700;
+
+    /* Marketing tokens (dark surfaces) */
+    --color-urgency: #f36;
+    --color-urgency-hover: #f57;
+    --color-urgency-bg: rgb(255 51 102 / 15%);
+    --color-deal: #ff8c5a;
+    --color-deal-bg: rgb(255 140 90 / 15%);
+    --color-flash: #ffd93d;
+    --color-flash-bg: rgb(255 217 61 / 15%);
+    --color-reward: #c084fc;
+    --color-reward-bg: rgb(192 132 252 / 15%);
+    --color-free-shipping: #0f8;
+}
+
+html[data-theme="tech"] h1,
+[data-theme="tech"] h1,
+html[data-theme="tech"] h2,
+[data-theme="tech"] h2,
+html[data-theme="tech"] h3,
+[data-theme="tech"] h3 {
+    font-family: var(--font-family-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* =============================================
+   MINIMAL — Scandinavian, no rounding, no shadows
+   ============================================= */
+
+html[data-theme="minimal"],
+[data-theme="minimal"] {
+    /* Colors */
+    --color-bg: #fff;
+    --color-bg-subtle: #fafafa;
+    --color-bg-muted: #f0f0f0;
+    --color-bg-inverse: #0a0a0a;
+    --color-bg-accent: #f5f5f5;
+    --color-bg-overlay: rgb(255 255 255 / 95%);
+    --color-text: #0a0a0a;
+    --color-text-secondary: #5a5a5a;
+    --color-text-muted: #9a9a9a;
+    --color-text-inverse: #fff;
+    --color-border: #eaeaea;
+    --color-border-strong: #bababa;
+    --color-border-muted: #f5f5f5;
+    --color-primary: #0a0a0a;
+    --color-primary-hover: #2a2a2a;
+    --color-primary-active: #000;
+    --color-primary-subtle: #f5f5f5;
+    --color-secondary: #5a5a5a;
+    --color-secondary-hover: #3a3a3a;
+    --color-input-bg: #fff;
+    --color-modal-overlay: rgb(0 0 0 / 40%);
+
+    /* Almost no shadows */
+    --shadow-xs: none;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 4%);
+    --shadow-md: 0 1px 3px rgb(0 0 0 / 6%);
+    --shadow-lg: 0 2px 6px rgb(0 0 0 / 6%);
+    --shadow-xl: 0 4px 12px rgb(0 0 0 / 6%);
+    --shadow-primary: none;
+    --shadow-card-hover: 0 2px 8px rgb(0 0 0 / 5%);
+    --gradient-primary: linear-gradient(135deg, #0a0a0a 0%, #2a2a2a 100%);
+    --gradient-hero: linear-gradient(135deg, #fff 0%, #fafafa 100%);
+
+    /* Typography */
+    --font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+    --font-family-display: "Inter", "Helvetica Neue", system-ui, sans-serif;
+
+    /* Zero rounding */
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 2px;
+    --radius-2xl: 2px;
+    --radius-full: 0px;
+
+    /* Decorators */
+    --theme-button-radius: 0px;
+    --theme-button-text-transform: none;
+    --theme-button-letter-spacing: 0.02em;
+    --theme-button-font-weight: 400;
+    --theme-button-border-width: 1px;
+    --theme-button-border-color: var(--color-text);
+    --theme-button-shadow-rest: none;
+    --theme-button-shadow-hover: none;
+    --theme-button-translate-hover: 0;
+    --theme-card-radius: 0px;
+    --theme-input-radius: 0px;
+    --theme-chip-radius: 0px;
+    --theme-chip-border-width: 1px;
+    --theme-chip-border-color: var(--color-text);
+    --theme-chip-text-transform: none;
+    --theme-chip-letter-spacing: 0.02em;
+    --theme-chip-font-weight: 400;
+    --theme-heading-text-transform: none;
+    --theme-heading-letter-spacing: -0.03em;
+    --theme-heading-font-weight: 300;
+
+    /* Marketing tokens (monochrome-ish) */
+    --color-urgency: #c9302c;
+    --color-urgency-bg: #f5eaea;
+    --color-deal: #b85c00;
+    --color-deal-bg: #f5eddf;
+    --color-flash: #b89200;
+    --color-flash-bg: #f5f0db;
+    --color-reward: #4a4a4a;
+    --color-reward-bg: #eaeaea;
+    --color-free-shipping: #2f7a4a;
+}
+
+html[data-theme="minimal"] h1,
+[data-theme="minimal"] h1,
+html[data-theme="minimal"] h2,
+[data-theme="minimal"] h2,
+html[data-theme="minimal"] h3,
+[data-theme="minimal"] h3 {
+    font-weight: 300;
+    letter-spacing: -0.03em;
+}
+
+html[data-theme="minimal"] h1,
+[data-theme="minimal"] h1 {
+    font-weight: 200;
+}

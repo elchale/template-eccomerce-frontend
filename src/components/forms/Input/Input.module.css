@@ -1,0 +1,357 @@
+/* Base styles */
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xxs);
+}
+
+.group.fullWidth {
+    width: 100%;
+}
+
+/* Label placement */
+.group.labelPlacementOutside {
+    flex-direction: column;
+}
+
+.group.labelPlacementOutsideLeft {
+    flex-direction: row;
+    gap: var(--spacing-md);
+    align-items: center;
+}
+
+.group.labelPlacementOutsideLeft .label {
+    min-width: 100px;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+/* Handle the floating outside label container height */
+.group.hasFloatingOutsideLabel {
+    position: relative;
+
+    /* Add top margin to maintain the same height as if the label was outside */
+    padding-top: calc(var(--text-md) + var(--spacing-md));
+}
+
+@media (width <= 768px) {
+    .group.labelPlacementOutsideLeft {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        align-items: flex-start;
+    }
+}
+
+.label {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xs);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+}
+
+.inputContainer {
+    position: relative;
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    width: 100%;
+}
+
+.field {
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--spacing-sm);
+    line-height: 1.5;
+    color: var(--color-text);
+    outline: none;
+    border-style: solid;
+    border-width: var(--border-width-sm);
+    transition: all 0.2s ease;
+}
+
+/* Inside label styling */
+.inputLabel {
+    position: absolute;
+    left: var(--spacing-sm);
+    z-index: 1;
+    margin: 0;
+    color: var(--color-text);
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+.insideLabel {
+    top: 50%;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    transform: translateY(-50%);
+}
+
+.insideLabel.floating {
+    top: var(--spacing-xs);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text);
+    transform: translateY(0);
+}
+
+/* Floating outside label styles */
+.floatingOutsideLabel {
+    top: 50%;
+
+    /* color: var(--color-text-secondary); */
+    font-size: var(--text-sm);
+    transform: translateY(-50%);
+    transition: all 0.2s ease;
+}
+
+.floatingOutsideLabel.floatAbove {
+    top: calc(-1 * (var(--text-md) + var(--spacing-md)));
+    left: 0;
+    padding: 0 var(--spacing-xxs);
+    font-size: var(--text-sm);
+    background-color: var(--color-bg);
+    transform: translateY(0);
+}
+
+.field.hasInsideLabel {
+    padding-top: calc(var(--spacing-lg) + var(--spacing-sm));
+    padding-bottom: var(--spacing-sm);
+}
+
+/* Content positioning */
+.startContent {
+    position: absolute;
+    left: var(--spacing-sm);
+    z-index: 2;
+}
+
+.endContent {
+    position: absolute;
+    right: var(--spacing-sm);
+    z-index: 2;
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.field.hasStart {
+    padding-left: calc(var(--spacing-md) + var(--spacing-md)) !important;
+}
+
+.field.hasEnd {
+    padding-right: calc(var(--spacing-md) + var(--spacing-md)) !important;
+}
+
+/* Password toggle */
+.passwordToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: var(--icon-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.passwordToggle:hover {
+    color: var(--color-text);
+}
+
+/* Variants */
+.field.variantFlat {
+    background-color: var(--color-bg-subtle);
+    border-color: var(--color-bg-subtle);
+}
+
+.field.variantBordered {
+    background-color: transparent;
+    border-color: var(--color-border);
+    border-width: var(--border-width-sm);
+}
+
+.field.variantFaded {
+    background-color: var(--color-bg-subtle);
+    border-color: var(--color-border);
+    border-width: var(--border-width-sm);
+}
+
+.field.variantUnderlined {
+    background-color: transparent;
+    border-width: 0 0 var(--border-width-sm) 0;
+    border-radius: 0;
+}
+
+/* Sizes */
+.field.sizeSm {
+    height: var(--size-sm);
+    padding-right: var(--spacing-sm);
+    padding-left: var(--spacing-sm);
+    font-size: var(--text-sm);
+}
+
+.field.sizeMd {
+    height: var(--size-md);
+    font-size: var(--text-md);
+}
+
+.field.sizeLg {
+    height: var(--size-lg);
+    font-size: var(--text-lg);
+}
+
+/* Radius */
+.field.radiusNone {
+    border-radius: var(--radius-none);
+}
+
+.field.radiusSm {
+    border-radius: var(--radius-sm);
+}
+
+.field.radiusMd {
+    border-radius: var(--radius-md);
+}
+
+.field.radiusLg {
+    border-radius: var(--radius-lg);
+}
+
+.field.radiusFull {
+    border-radius: var(--radius-full);
+}
+
+/* Hover state */
+.field:hover:not(:disabled) {
+    border-color: var(--color-border-strong) !important;
+}
+
+/* Focus state */
+.field:focus,
+.field:focus-visible {
+    outline: none;
+    border-color: var(--color-primary) !important;
+    box-shadow: none;
+}
+
+/* Disabled state */
+.field:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Error states */
+.field.inputInvalid,
+.field.inputInvalid:focus {
+    color: var(--color-error);
+    border-color: var(--color-error) !important;
+}
+
+.errorMsg {
+    margin-top: var(--spacing-xs);
+    font-size: var(--text-sm);
+    color: var(--color-error);
+}
+
+.requiredMark {
+    color: var(--color-error);
+}
+
+/* Clear button */
+.clearBtn {
+    position: absolute;
+    right: var(--spacing-sm);
+    z-index: 2;
+    padding: 0;
+    font-size: var(--icon-md);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+.clearBtn:hover {
+    color: var(--color-text-secondary);
+}
+
+/* Multiline textarea styles */
+.field.multilineTextarea {
+    height: auto;
+    min-height: var(--size-lg);
+    padding: var(--spacing-sm);
+    font-family: inherit;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.field.multilineTextarea.hasInsideLabel {
+    padding-top: calc(var(--spacing-md) + var(--spacing-xs));
+}
+
+/* Content positioning */
+.startContent,
+.endContent {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-secondary);
+}
+
+.startContent.hasInsideLabel,
+.endContent.hasInsideLabel {
+    padding-top: calc(var(--spacing-md) + var(--spacing-xs));
+    padding-bottom: 0;
+}
+
+/* Color variants */
+.field.colorDefault:focus,
+.field.colorDefault:focus-visible {
+    border-color: var(--color-text-secondary) !important;
+}
+
+.field.colorPrimary {
+    border-color: var(--color-primary);
+}
+
+.field.colorPrimary:focus,
+.field.colorPrimary:focus-visible {
+    border-color: var(--color-primary) !important;
+}
+
+.field.colorSecondary {
+    border-color: var(--color-secondary);
+}
+
+.field.colorSecondary:focus,
+.field.colorSecondary:focus-visible {
+    border-color: var(--color-secondary) !important;
+}
+
+.field.colorSuccess {
+    border-color: var(--color-success);
+}
+
+.field.colorSuccess:focus,
+.field.colorSuccess:focus-visible {
+    border-color: var(--color-success) !important;
+}
+
+.field.colorWarning {
+    border-color: var(--color-warning);
+}
+
+.field.colorWarning:focus,
+.field.colorWarning:focus-visible {
+    border-color: var(--color-warning) !important;
+}
+
+.field.colorDanger {
+    border-color: var(--color-error);
+}
+
+.field.colorDanger:focus,
+.field.colorDanger:focus-visible {
+    border-color: var(--color-error) !important;
+}

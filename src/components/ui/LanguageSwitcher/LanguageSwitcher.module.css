@@ -1,0 +1,146 @@
+.wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+/* ── Trigger button ── */
+.trigger {
+    display: inline-flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    min-width: unset;
+    min-height: unset;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    transition:
+        color var(--transition-base),
+        border-color var(--transition-base),
+        background var(--transition-base);
+}
+
+.trigger:hover {
+    color: var(--color-primary);
+    background: var(--color-primary-subtle);
+    border-color: var(--color-primary);
+}
+
+.trigger:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.globeIcon {
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.flag {
+    flex-shrink: 0;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.code {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.chevron {
+    flex-shrink: 0;
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* ── Dropdown panel ── */
+.dropdown {
+    position: absolute;
+    top: calc(100% + var(--spacing-xs));
+    right: 0;
+    z-index: var(--z-dropdown);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 160px;
+    padding: var(--spacing-xs);
+    pointer-events: none;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+    transform-origin: top right;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
+}
+
+.dropdownOpen {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* ── Option rows ── */
+.option {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    width: 100%;
+    min-height: unset;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    transition:
+        background var(--transition-base),
+        color var(--transition-base);
+}
+
+.option:hover {
+    color: var(--color-text);
+    background: var(--color-bg-subtle);
+}
+
+.option:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+}
+
+.optionActive {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.optionFlag {
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.optionLabel {
+    flex: 1;
+}
+
+.checkIcon {
+    flex-shrink: 0;
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--color-primary);
+}

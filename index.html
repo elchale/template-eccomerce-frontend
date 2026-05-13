@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <!-- Izipay smart-form runtime. Loaded from the Krypton CDN before our bundle
+             so window.KR is ready when IzipayForm mounts. -->
+        <link
+            rel="stylesheet"
+            href="https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/neon-reset.css"
+        />
+        <script src="https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/neon.js"></script>
+
+        <!--
+            Security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS,
+            Referrer-Policy, Permissions-Policy) are delivered as HTTP headers, not
+            <meta> tags. The browser ignores frame-ancestors / X-Frame-Options
+            when set via <meta>, and a static <meta> CSP would also block local
+            HTTP backends in dev. Header sources:
+              · Production (Vercel):  vercel.json -> headers[]
+              · Local dev (Vite):     vite.config.ts -> server.headers
+        -->
+        <!-- Title is the env-driven project name; per-route <title> comes from
+             react-helmet-async on the React side. Falls back to a generic
+             label if VITE_PROJECT_NAME is unset at build time. -->
+        <title>%VITE_PROJECT_NAME%</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&family=Playfair+Display:wght@500;700&family=Nunito:wght@400;600;700&family=Fraunces:wght@500;700&family=Archivo:wght@400;600;700&family=Archivo+Black&family=Quicksand:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap"
+        />
+        <!--
+            Pre-paint theme hydration — runs synchronously before React mounts
+            to prevent flash-of-wrong-theme on hard refresh. Served as a static
+            file from /public so no inline script is needed (removes 'unsafe-inline'
+            requirement from script-src CSP).
+        -->
+        <script src="/theme-prepaint.js"></script>
+    </head>
+
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>

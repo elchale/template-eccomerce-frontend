@@ -1,0 +1,20 @@
+.header {
+    color: var(--color-text);
+}
+
+.row {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    background-color: var(--color-bg-subtle);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.row th:first-child {
+    border-radius: 0;
+}
+
+.row th:last-child {
+    border-radius: 0;
+}

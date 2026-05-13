@@ -1,0 +1,156 @@
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--color-bg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition:
+        border-color var(--transition-base),
+        box-shadow var(--transition-base),
+        transform var(--transition-base);
+}
+
+.card:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.cardSelected {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-subtle);
+}
+
+.cardSelected:hover {
+    border-color: var(--color-primary);
+}
+
+/* Live preview — data-theme attribute scopes the inner content */
+.preview {
+    display: flex;
+    align-items: stretch;
+    min-height: 200px;
+    padding: var(--spacing-md);
+    font-family: var(--font-family);
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+
+.previewInner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
+}
+
+.previewHeading {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    color: var(--color-text);
+}
+
+.previewBody {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+}
+
+.previewControls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: auto;
+}
+
+/* Button mirrors the global Button decorators so admins see the real style */
+.previewButton {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.8rem;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: var(--theme-button-font-weight);
+    color: var(--color-text-inverse);
+    text-transform: var(--theme-button-text-transform);
+    letter-spacing: var(--theme-button-letter-spacing);
+    cursor: default;
+    background: var(--color-primary);
+    border: var(--theme-button-border-width) solid var(--theme-button-border-color);
+
+    /* Theme decorators */
+    border-radius: var(--theme-button-radius);
+    box-shadow: var(--theme-button-shadow-rest);
+}
+
+.previewChip {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+    padding: 0.3rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--theme-chip-radius);
+}
+
+.swatchRow {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.swatch {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+}
+
+/* Footer with name + description (uses parent admin theme, not preview theme) */
+.cardFooter {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+}
+
+.cardName {
+    margin: 0;
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.cardDesc {
+    margin: 2px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.selectedBadge {
+    position: absolute;
+    top: var(--spacing-xs);
+    right: var(--spacing-xs);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    color: var(--color-text-inverse);
+    background: var(--color-primary);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-sm);
+}

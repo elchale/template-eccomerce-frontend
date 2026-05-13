@@ -1,0 +1,22 @@
+.title {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 1rem;
+    margin: 0;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: left;
+    background-color: var(--color-bg-subtle);
+
+    /* Button reset (applies when rendered as <button>) */
+    border: 0;
+    border-radius: 8px;
+}
+
+button.title {
+    cursor: pointer;
+}

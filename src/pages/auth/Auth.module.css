@@ -1,0 +1,118 @@
+/* Auth Pages - Premium Design */
+
+.container {
+    position: relative;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    padding: var(--spacing-xl);
+    background: var(--gradient-hero);
+}
+
+.container::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    content: "";
+    background:
+        radial-gradient(circle at 20% 80%, rgb(0 128 96 / 6%) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgb(79 70 229 / 4%) 0%, transparent 50%);
+}
+
+@media (width <= 480px) {
+    .container {
+        padding: var(--spacing-md);
+    }
+}
+
+.header {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: var(--spacing-md);
+}
+
+.backButton {
+    display: inline-flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    transition: color 0.2s ease;
+}
+
+.backButton:hover {
+    color: var(--color-text);
+}
+
+.card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    padding: var(--spacing-2xl);
+    background: var(--color-bg);
+    border: none;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+}
+
+@media (width <= 480px) {
+    .card {
+        padding: var(--spacing-xl);
+    }
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+.logoImg {
+    width: auto;
+    height: 36px;
+}
+
+.title {
+    margin: 0 0 var(--spacing-xl);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: center;
+    letter-spacing: var(--tracking-tight);
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: var(--spacing-lg);
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+.link {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.link:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,71 @@
+.bar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--z-dropdown) + 5);
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
+    pointer-events: none;
+    background: var(--color-bg);
+    border-top: 1px solid var(--color-border);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(100%);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+/* Fills the gap that appears below the bar when Chrome Android's bottom toolbar
+   hides on scroll-down. position:fixed bottom:0 anchors to the ICB, which doesn't
+   expand as the toolbar animates away — this ::after extends the bar's background
+   into that revealed area. Chrome's toolbar sits on top of it when visible (not
+   seen). Safari's bottom toolbar never hides so it always covers this area too. */
+.bar::after {
+    position: absolute;
+    right: 0;
+    bottom: -100px;
+    left: 0;
+    height: 100px;
+    content: "";
+    background: var(--color-bg);
+}
+
+.barVisible {
+    pointer-events: auto;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--spacing-xxs);
+    min-width: 0;
+}
+
+.name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text);
+    white-space: nowrap;
+}
+
+.price {
+    font-size: var(--text-md);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.btn {
+    flex-shrink: 0;
+    min-width: 160px;
+}

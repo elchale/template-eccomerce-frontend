@@ -1,0 +1,70 @@
+.container {
+    display: inline-flex;
+    gap: var(--spacing-xxs);
+    align-items: center;
+}
+
+.stars {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: unset;
+    min-height: unset;
+    line-height: 1;
+    user-select: none;
+}
+
+.sm .star {
+    width: 14px;
+    height: 14px;
+}
+
+.md .star {
+    width: 18px;
+    height: 18px;
+}
+
+.lg .star {
+    width: 22px;
+    height: 22px;
+}
+
+.filled {
+    color: var(--color-warning);
+}
+
+.empty {
+    color: var(--color-text-muted);
+}
+
+.interactive {
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.interactive:hover {
+    transform: scale(1.15);
+}
+
+.count {
+    margin-left: 2px;
+    color: var(--color-text-muted);
+}
+
+.sm .count {
+    font-size: var(--text-sm);
+}
+
+.md .count {
+    font-size: var(--text-md);
+}
+
+.lg .count {
+    font-size: var(--text-md);
+}

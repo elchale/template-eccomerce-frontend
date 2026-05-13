@@ -1,0 +1,26 @@
+.container {
+    padding: var(--spacing-sm) 0;
+}
+
+.labelRow {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin-bottom: var(--spacing-xs);
+}
+
+.icon {
+    flex-shrink: 0;
+    color: var(--color-free-shipping);
+}
+
+.label {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+.labelSuccess {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-free-shipping);
+}
