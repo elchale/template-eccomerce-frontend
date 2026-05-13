@@ -129,6 +129,7 @@ export const API_ROUTES = {
     adminOrders: '/api/admin/orders/',
     adminOrderDetail: (id: number) => `/api/admin/orders/${id}/`,
     adminOrderStatus: (id: number) => `/api/admin/orders/${id}/status/`,
+    adminOrderRefund: (id: number) => `/api/admin/orders/${id}/refund/`,
     adminCoupons: '/api/admin/coupons/',
     adminCouponDetail: (id: number) => `/api/admin/coupons/${id}/`,
     adminDashboard: '/api/admin/dashboard/',

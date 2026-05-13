@@ -1,12 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from '@phosphor-icons/react';
 import type { AxiosError } from 'axios';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useCart, useCheckout } from '@/api';
+import {
+    AddressPicker,
+    EMPTY_ADDRESS,
+    formatAddressForBackend,
+    type AddressFields,
+} from '@/components/features/AddressPicker';
 import { FormInput } from '@/components/forms/FormField/FormInput';
 import { Button, Spinner } from '@/components/ui';
 import { ROUTES, buildRoute } from '@/constants/routes';
@@ -40,11 +47,22 @@ export function CheckoutPage() {
     const { data: cart, isLoading: cartLoading } = useCart();
     const checkout = useCheckout();
 
+    // Structured address state. The shipping_address sent to the backend is
+    // assembled from this — keeps the API contract intact while the UI gains
+    // the Temu-style fields (country / departamento / distrito / etc.). The
+    // legacy `shippingAddress` form field is kept under the hood so RHF
+    // validation still gates submission against a non-empty address.
+    const [address, setAddress] = useState<AddressFields>(() => ({
+        ...EMPTY_ADDRESS,
+        recipient: [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim(),
+    }));
+
     const {
         control,
         handleSubmit,
         watch,
         setError,
+        setValue,
         formState: { errors },
         register,
     } = useForm<CheckoutFormValues>({
@@ -61,13 +79,25 @@ export function CheckoutPage() {
 
     const sameAsShipping = watch('sameAsShipping');
 
+    const handleAddressChange = (next: AddressFields) => {
+        setAddress(next);
+        // Mirror the joined string into the hidden RHF field so the zod
+        // `min(1)` guard sees the latest state and field errors clear as
+        // soon as the user fills the address in.
+        setValue('shippingAddress', formatAddressForBackend(next), {
+            shouldValidate: true,
+        });
+    };
+
     const onSubmit = (values: CheckoutFormValues) => {
         const billingAddress = values.sameAsShipping ? '' : (values.billingAddress?.trim() ?? '');
-        const phone = values.phone?.trim() ?? '';
+        // Phone comes from the structured address; fall back to the
+        // billing-side phone field if the user typed there instead.
+        const phone = (address.phone || values.phone || '').trim();
         const notes = values.notes?.trim() ?? '';
         checkout.mutate(
             {
-                shipping_address: values.shippingAddress.trim(),
+                shipping_address: formatAddressForBackend(address),
                 email: values.email.trim(),
                 ...(billingAddress && { billing_address: billingAddress }),
                 ...(phone && { phone }),
@@ -179,27 +209,19 @@ export function CheckoutPage() {
                                 isRequired
                                 type="email"
                             />
-                            <FormInput
-                                control={control}
-                                name="phone"
-                                label={fieldError('phone') ?? t('checkout_phone')}
-                                placeholder={t('checkout_phone_placeholder')}
-                                type="tel"
-                            />
                         </div>
                     </div>
 
                     <div className={styles.card}>
                         <h2 className={styles.cardTitle}>{t('checkout_shipping_address')}</h2>
-                        <FormInput
-                            control={control}
-                            name="shippingAddress"
-                            label={fieldError('shippingAddress') ?? t('checkout_shipping_address')}
-                            placeholder={t('checkout_shipping_address_placeholder')}
-                            isRequired
-                            multiline
-                            rows={3}
-                        />
+                        <AddressPicker value={address} onChange={handleAddressChange} />
+                        {fieldError('shippingAddress') && (
+                            <p className={styles.shippingError} role="alert">
+                                {fieldError('shippingAddress')}
+                            </p>
+                        )}
+                        {/* Keep the hidden field registered so RHF tracks the value */}
+                        <input type="hidden" {...register('shippingAddress')} />
                     </div>
 
                     <div className={styles.card}>

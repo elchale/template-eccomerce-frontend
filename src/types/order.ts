@@ -70,6 +70,19 @@ export interface OrderListItem {
     created: string;
 }
 
+export type RefundStatus = 'pending' | 'approved' | 'rejected' | 'processed';
+
+export interface Refund {
+    id: number;
+    amount: string;
+    reason: string;
+    status: RefundStatus;
+    external_refund_id: string;
+    requested_by_email: string;
+    processed_by_email: string;
+    created: string;
+}
+
 export interface OrderDetail extends OrderListItem {
     subtotal: string;
     discount_amount: string;
@@ -81,6 +94,8 @@ export interface OrderDetail extends OrderListItem {
     phone: string;
     items: OrderItem[];
     status_history: OrderStatusHistory[];
+    /** Admin-serialized orders include refunds; customer-facing detail omits. */
+    refunds?: Refund[];
     /** New fields added by Izipay payments feature (ADR §6) */
     uuid?: string;
     payment_status?: PaymentStatus;

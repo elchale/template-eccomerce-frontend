@@ -191,16 +191,56 @@ export const useAdminOrderDetail = (id: number) => {
 };
 
 /** Transition an order to a new status. The optional `note` is appended to
- *  the order's audit log on the backend. Both admin and customer order
- *  caches are invalidated since the customer's "track order" view reads
- *  the same status field. */
+ *  the order's audit log on the backend. `cancelReason` is required when
+ *  transitioning to 'cancelled' — the backend enforces this with a 400.
+ *  Both admin and customer caches are invalidated since the customer's
+ *  "track order" view reads the same status field. */
 export const useAdminUpdateOrderStatus = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, status, note }: { id: number; status: string; note?: string }) => {
+        mutationFn: async ({
+            id,
+            status,
+            note,
+            cancelReason,
+        }: {
+            id: number;
+            status: string;
+            note?: string;
+            cancelReason?: string;
+        }) => {
             const { data } = await api.patch(API_ROUTES.adminOrderStatus(id), {
                 new_status: status,
-                note,
+                ...(note && { note }),
+                ...(cancelReason && { cancel_reason: cancelReason }),
+            });
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: KEYS.all });
+            queryClient.invalidateQueries({ queryKey: ORDER_KEYS.all });
+        },
+    });
+};
+
+/** Issue a refund through Izipay. Reason is required; amount is optional
+ *  (full refund when omitted). Returns the freshly-fetched AdminOrder so
+ *  the admin UI can re-render with the new refund row + payment_status. */
+export const useAdminRefundOrder = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            id,
+            reason,
+            amount,
+        }: {
+            id: number;
+            reason: string;
+            amount?: string;
+        }) => {
+            const { data } = await api.post(API_ROUTES.adminOrderRefund(id), {
+                reason,
+                ...(amount && { amount }),
             });
             return data;
         },

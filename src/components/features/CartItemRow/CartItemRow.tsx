@@ -1,3 +1,4 @@
+import { Trash } from '@phosphor-icons/react';
 import { useTranslation } from 'react-i18next';
 
 import { QuantitySelector, ProductImage } from '@/components/ui';
@@ -12,6 +13,12 @@ interface CartItemRowProps {
     onRemove: (id: number) => void;
 }
 
+/**
+ * One line in the cart UI. Delete is an icon-only trash button — the
+ * actual confirm modal lives in the parent (CartPage / CartDrawer) so
+ * the row stays presentational and the destructive prompt copy can vary
+ * by context (drawer vs full-page cart).
+ */
 export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowProps) {
     const { t } = useTranslation();
 
@@ -36,11 +43,13 @@ export function CartItemRow({ item, onUpdateQuantity, onRemove }: CartItemRowPro
                 />
                 <span className={styles.lineTotal}>{formatCurrency(item.line_total)}</span>
                 <button
+                    type="button"
                     className={styles.removeButton}
                     onClick={() => onRemove(item.id)}
                     aria-label={t('remove_item_aria', { name: item.product_name })}
+                    title={t('remove_item')}
                 >
-                    {t('remove_item')}
+                    <Trash size={18} weight="bold" aria-hidden="true" />
                 </button>
             </div>
         </div>

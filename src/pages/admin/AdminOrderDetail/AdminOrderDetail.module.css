@@ -34,6 +34,65 @@
     justify-content: space-between;
 }
 
+.headerActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* Cancel / refund modal styling (used by CancelOrderModal + RefundOrderModal) */
+.modalContainer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    min-width: 320px;
+    max-width: 480px;
+    padding: var(--spacing-xl);
+}
+
+.modalTitle {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.modalMessage {
+    margin: 0;
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+}
+
+.modalFields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.modalActions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    margin-top: var(--spacing-sm);
+}
+
+.partialToggle {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    font-size: var(--text-md);
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+/* Refunds list card */
+.refundsCard {
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+}
+
 .orderNumber {
     margin: 0;
     font-size: var(--text-2xl);

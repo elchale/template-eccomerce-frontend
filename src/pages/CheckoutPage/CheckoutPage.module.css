@@ -89,6 +89,12 @@
     gap: var(--spacing-md);
 }
 
+.shippingError {
+    margin: var(--spacing-sm) 0 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-error);
+}
+
 .checkboxLabel {
     display: flex;
     gap: var(--spacing-xs);

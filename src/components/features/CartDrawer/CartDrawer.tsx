@@ -1,14 +1,16 @@
 import { useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useCart, useUpdateCartItem, useRemoveCartItem } from '@/api';
 import { CartItemRow } from '@/components/features/CartItemRow/CartItemRow';
 import { FreeShippingBar } from '@/components/features/FreeShippingBar/FreeShippingBar';
+import { ConfirmModal } from '@/components/modals';
 import { Button, Spinner, EmptyState } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
-import { useCartStore } from '@/stores';
+import { useCartStore, useModalStore } from '@/stores';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 import styles from './CartDrawer.module.css';
@@ -37,6 +39,7 @@ export function CartDrawer() {
     const { data: cart, isLoading } = useCart();
     const updateItem = useUpdateCartItem();
     const removeItem = useRemoveCartItem();
+    const openModal = useModalStore((s) => s.openModal);
 
     const overlayReady = useRef(false);
     useEffect(() => {
@@ -75,14 +78,33 @@ export function CartDrawer() {
     };
 
     const handleRemove = (id: number) => {
-        if (isGuest) {
-            const item = localItems[id - 1];
-            if (item) {
-                removeLocalItem(item.product_id, item.variant_id);
-            }
-        } else {
-            removeItem.mutate(id);
-        }
+        // Same confirm step the full-page cart uses — removing a line is
+        // destructive, so we never lose an item to a stray click whether
+        // the row was rendered in the drawer or the page.
+        // The copy lives in the `shop` namespace (CartPage uses it too);
+        // namespace it explicitly because the drawer's default namespace
+        // is `common`.
+        openModal(
+            <ConfirmModal
+                title={t('shop:cart_remove_confirm_title')}
+                message={t('shop:cart_remove_confirm_message')}
+                confirmLabel={t('shop:cart_remove_label')}
+                variant="danger"
+                onConfirm={() => {
+                    if (isGuest) {
+                        const item = localItems[id - 1];
+                        if (item) {
+                            removeLocalItem(item.product_id, item.variant_id);
+                            toast.success(t('shop:cart_item_removed'));
+                        }
+                    } else {
+                        removeItem.mutate(id, {
+                            onSuccess: () => toast.success(t('shop:cart_item_removed')),
+                        });
+                    }
+                }}
+            />,
+        );
     };
 
     const handleCheckout = () => {

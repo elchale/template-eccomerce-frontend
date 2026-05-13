@@ -1,4 +1,4 @@
-import { ArrowLeft } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowUUpLeft, XCircle } from '@phosphor-icons/react';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -22,9 +22,12 @@ import {
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
-import type { OrderStatus } from '@/types/order';
+import { useModalStore } from '@/stores';
+import type { OrderStatus, RefundStatus } from '@/types/order';
 
 import styles from './AdminOrderDetail.module.css';
+import { CancelOrderModal } from './CancelOrderModal';
+import { RefundOrderModal } from './RefundOrderModal';
 
 /**
  * `/admin/orders/:id` — order detail + status mutation panel.
@@ -49,6 +52,7 @@ export function AdminOrderDetail() {
 
     const { data: order, isLoading, error } = useAdminOrderDetail(orderId);
     const updateStatus = useAdminUpdateOrderStatus();
+    const openModal = useModalStore((s) => s.openModal);
 
     const [newStatus, setNewStatus] = useState('');
     const [note, setNote] = useState('');
@@ -102,19 +106,71 @@ export function AdminOrderDetail() {
             </Link>
 
             {/* Order header */}
-            <div className={styles.orderHeader}>
-                <div>
-                    <h2 className={styles.orderNumber}>
-                        {t('order_detail_order', { number: order.order_number })}
-                    </h2>
-                    <p className={styles.orderDate}>
-                        {t('order_detail_placed_on', {
-                            date: new Date(order.created).toLocaleString(i18n.language),
-                        })}
-                    </p>
-                </div>
-                <StatusBadge status={order.status} />
-            </div>
+            {(() => {
+                const isTerminal = order.status === 'cancelled' || order.status === 'delivered';
+                const processedRefundsTotal = (order.refunds ?? [])
+                    .filter((r) => r.status === 'processed')
+                    .reduce((sum, r) => sum + Number.parseFloat(r.amount), 0);
+                const maxRefundable = Math.max(
+                    0,
+                    Number.parseFloat(order.total) - processedRefundsTotal,
+                );
+                const canRefund =
+                    order.payment_status === 'paid' && maxRefundable > 0 && !!order.izipay_transaction_id;
+
+                return (
+                    <div className={styles.orderHeader}>
+                        <div>
+                            <h2 className={styles.orderNumber}>
+                                {t('order_detail_order', { number: order.order_number })}
+                            </h2>
+                            <p className={styles.orderDate}>
+                                {t('order_detail_placed_on', {
+                                    date: new Date(order.created).toLocaleString(i18n.language),
+                                })}
+                            </p>
+                        </div>
+                        <div className={styles.headerActions}>
+                            <StatusBadge status={order.status} />
+                            {canRefund && (
+                                <Button
+                                    variant="warning"
+                                    size="sm"
+                                    onClick={() =>
+                                        openModal(
+                                            <RefundOrderModal
+                                                orderId={order.id}
+                                                orderNumber={order.order_number}
+                                                maxRefundable={maxRefundable}
+                                            />,
+                                        )
+                                    }
+                                >
+                                    <ArrowUUpLeft size={16} weight="bold" />
+                                    {t('order_detail_refund_btn')}
+                                </Button>
+                            )}
+                            {!isTerminal && (
+                                <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() =>
+                                        openModal(
+                                            <CancelOrderModal
+                                                orderId={order.id}
+                                                orderNumber={order.order_number}
+                                            />,
+                                        )
+                                    }
+                                >
+                                    <XCircle size={16} weight="bold" />
+                                    {t('order_detail_cancel_btn')}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                );
+            })()}
 
             <div className={styles.grid}>
                 {/* Status Update */}
@@ -241,6 +297,43 @@ export function AdminOrderDetail() {
                     </div>
                 </div>
             </Card>
+
+            {/* Refunds list — only present on the admin-serialized order */}
+            {!!order.refunds && order.refunds.length > 0 && (
+                <Card className={styles.refundsCard}>
+                    <CardTitle>{t('order_detail_refunds')}</CardTitle>
+                    <Table aria-label={t('order_detail_refunds')} radius={8}>
+                        <TableHeader>
+                            <TableColumn>{t('order_detail_refund_date')}</TableColumn>
+                            <TableColumn>{t('order_detail_refund_amount')}</TableColumn>
+                            <TableColumn>{t('order_detail_refund_reason')}</TableColumn>
+                            <TableColumn>{t('order_detail_refund_status')}</TableColumn>
+                            <TableColumn>{t('order_detail_refund_by')}</TableColumn>
+                        </TableHeader>
+                        <TableBody>
+                            {order.refunds.map((r) => {
+                                const statusLabel: Record<RefundStatus, string> = {
+                                    pending: t('refund_status_pending'),
+                                    approved: t('refund_status_approved'),
+                                    rejected: t('refund_status_rejected'),
+                                    processed: t('refund_status_processed'),
+                                };
+                                return (
+                                    <TableRow key={r.id}>
+                                        <TableCell>
+                                            {new Date(r.created).toLocaleString(i18n.language)}
+                                        </TableCell>
+                                        <TableCell>{formatCurrency(r.amount)}</TableCell>
+                                        <TableCell>{r.reason}</TableCell>
+                                        <TableCell>{statusLabel[r.status]}</TableCell>
+                                        <TableCell>{r.processed_by_email || '--'}</TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                </Card>
+            )}
 
             {/* Status History */}
             {!!order.status_history && order.status_history.length > 0 && (
