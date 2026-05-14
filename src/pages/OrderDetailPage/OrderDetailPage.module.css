@@ -110,23 +110,11 @@
     color: var(--color-text-secondary);
 }
 
-.unpaidCta {
-    display: inline-flex;
+/* Wrapper Link — Button does the actual styling so centering + hover
+ * stay consistent with the rest of the design system. */
+.unpaidCtaLink {
     flex-shrink: 0;
-    gap: var(--spacing-xs);
-    align-items: center;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    font-size: var(--text-md);
-    font-weight: 600;
-    color: var(--color-text-inverse);
     text-decoration: none;
-    background: var(--color-primary);
-    border-radius: var(--radius-full);
-    transition: filter var(--transition-base);
-}
-
-.unpaidCta:hover {
-    filter: brightness(0.95);
 }
 
 /* Section */
@@ -446,9 +434,14 @@
         padding: var(--spacing-md);
     }
 
-    .unpaidCta {
-        justify-content: center;
+    .unpaidCtaLink {
+        display: block;
         width: 100%;
+    }
+
+    .unpaidCtaLink :global(button) {
+        width: 100%;
+        justify-content: center;
     }
 
     .timeline {

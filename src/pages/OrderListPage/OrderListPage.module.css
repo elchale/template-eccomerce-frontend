@@ -54,37 +54,10 @@
     align-items: center;
 }
 
-.viewLink {
-    padding: var(--spacing-xs) var(--spacing-md);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-primary);
+/* The Link wrapper must be a flex container so the nested Button keeps
+ * its own padding/centering without the Link adding its own line-box
+ * quirks (default inline rendering left "Pagar"/"Ver" labels off-axis). */
+.actionLink {
+    display: inline-flex;
     text-decoration: none;
-    background: var(--color-primary-subtle);
-    border-radius: var(--radius-full);
-    transition: all var(--transition-base);
-}
-
-.viewLink:hover {
-    color: var(--color-text-inverse);
-    background: var(--color-primary);
-}
-
-/* "Pagar" CTA shown only for pending + unpaid orders — primary colour + filled
- * to draw the eye, sits ahead of "Ver" so the resume-payment action is the
- * default click target. */
-.payLink {
-    padding: var(--spacing-xs) var(--spacing-md);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--color-text-inverse);
-    text-decoration: none;
-    background: var(--color-primary);
-    border-radius: var(--radius-full);
-    transition: all var(--transition-base);
-}
-
-.payLink:hover {
-    background: var(--color-primary-hover, var(--color-primary));
-    filter: brightness(0.95);
 }

@@ -97,10 +97,12 @@ export function OrderDetailPage() {
                     </div>
                     <Link
                         to={buildRoute.checkoutPay(order.order_number)}
-                        className={styles.unpaidCta}
+                        className={styles.unpaidCtaLink}
                     >
-                        <CreditCard size={18} weight="bold" aria-hidden="true" />
-                        {t('order_detail_pay_now')}
+                        <Button variant="primary" size="md">
+                            <CreditCard size={18} weight="bold" aria-hidden="true" />
+                            {t('order_detail_pay_now')}
+                        </Button>
                     </Link>
                 </section>
             )}

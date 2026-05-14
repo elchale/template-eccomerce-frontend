@@ -119,18 +119,22 @@ export function OrderListPage() {
                                                                 to={buildRoute.checkoutPay(
                                                                     order.order_number,
                                                                 )}
-                                                                className={styles.payLink}
+                                                                className={styles.actionLink}
                                                             >
-                                                                {t('orders_pay_now')}
+                                                                <Button variant="primary" size="sm">
+                                                                    {t('orders_pay_now')}
+                                                                </Button>
                                                             </Link>
                                                         )}
                                                     <Link
                                                         to={buildRoute.orderDetail(
                                                             order.order_number,
                                                         )}
-                                                        className={styles.viewLink}
+                                                        className={styles.actionLink}
                                                     >
-                                                        {t('orders_view')}
+                                                        <Button variant="secondary" size="sm">
+                                                            {t('orders_view')}
+                                                        </Button>
                                                     </Link>
                                                 </div>
                                             </TableCell>
