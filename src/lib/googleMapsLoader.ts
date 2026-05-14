@@ -58,10 +58,21 @@ declare global {
     // Minimal ambient typing — we only use the namespaces we touch below.
     namespace google {
         namespace maps {
+            // Returned by addListener; we hold onto it so cleanup can remove
+            // the same listener instead of every listener on the instance.
+            interface MapsEventListener {
+                remove(): void;
+            }
+
+            namespace event {
+                function removeListener(listener: MapsEventListener): void;
+                function clearInstanceListeners(instance: object): void;
+            }
+
             namespace places {
                 class Autocomplete {
                     constructor(input: HTMLInputElement, opts?: AutocompleteOptions);
-                    addListener(name: string, fn: () => void): void;
+                    addListener(name: string, fn: () => void): MapsEventListener;
                     getPlace(): PlaceResult;
                     setFields(fields: string[]): void;
                 }

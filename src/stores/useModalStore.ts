@@ -44,8 +44,13 @@ export const useModalStore = create<ModalStore>()((set, get) => ({
     // Actions
     openModal: (content) => set({ isOpen: true, isClosing: false, content }),
     closeModal: () => {
-        const { isClosing, content } = get();
-        if (isClosing) return; // Prevent double-close
+        const { isOpen, isClosing, content } = get();
+        // Defensive: bail when there's nothing open. Without this guard a
+        // stray closeModal() (e.g. from a wrong-deps effect) starts the
+        // closing animation against a never-opened modal, leaving the
+        // overlay flashing for ANIMATION_DURATION even though no content
+        // ever rendered.
+        if (!isOpen || isClosing) return;
 
         // Call handleClose prop if exists
         if (content && typeof content.props.handleClose === 'function') {

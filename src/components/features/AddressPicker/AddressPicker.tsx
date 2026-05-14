@@ -113,6 +113,16 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     const lineRef = useRef<HTMLInputElement>(null);
     const [autocompleteReady, setAutocompleteReady] = useState(false);
 
+    // Latest-value refs so the place_changed listener always reads the
+    // CURRENT form state. Without these, the listener closes over the
+    // `value` snapshot at attach time — when the user types in other
+    // fields then picks a Google suggestion, the spread `...value` would
+    // discard their typing.
+    const valueRef = useRef(value);
+    const onChangeRef = useRef(onChange);
+    valueRef.current = value;
+    onChangeRef.current = onChange;
+
     const setField = <K extends keyof AddressFields>(key: K, val: AddressFields[K]) => {
         onChange({ ...value, [key]: val });
     };
@@ -121,20 +131,27 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
 
     // Attach Google Places autocomplete once the maps SDK is available.
     // Effect re-runs when the country changes so the search bias updates.
+    // We intentionally only depend on `value.country` — re-binding on every
+    // keystroke would be wasteful (Autocomplete is expensive to construct);
+    // the latest-value refs above keep the closure honest.
     useEffect(() => {
         let cancelled = false;
+        let autocomplete: google.maps.places.Autocomplete | null = null;
+        let listener: ReturnType<google.maps.places.Autocomplete['addListener']> | null = null;
+
         loadGoogleMapsPlaces().then((maps) => {
             if (cancelled || !maps || !lineRef.current) return;
 
             const restrictions =
                 value.country === 'OTHER' ? undefined : { country: value.country.toLowerCase() };
-            const autocomplete = new maps.places.Autocomplete(lineRef.current, {
+            autocomplete = new maps.places.Autocomplete(lineRef.current, {
                 fields: ['address_components', 'formatted_address'],
                 types: ['address'],
                 ...(restrictions && { componentRestrictions: restrictions }),
             });
 
-            autocomplete.addListener('place_changed', () => {
+            listener = autocomplete.addListener('place_changed', () => {
+                if (!autocomplete) return;
                 const place = autocomplete.getPlace();
                 if (!place.address_components) return;
 
@@ -145,27 +162,42 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     }
                 }
 
+                // Read from refs — guarantees we merge into the latest form
+                // state, not the snapshot at attach time.
+                const current = valueRef.current;
                 const next: AddressFields = {
-                    ...value,
+                    ...current,
                     addressLine1:
                         [partsByType['route'], partsByType['street_number']]
                             .filter(Boolean)
-                            .join(' ') || place.formatted_address || value.addressLine1,
+                            .join(' ') || place.formatted_address || current.addressLine1,
                     distrito: partsByType['sublocality_level_1']
                         ?? partsByType['locality']
                         ?? partsByType['sublocality']
-                        ?? value.distrito,
-                    provincia: partsByType['administrative_area_level_2'] ?? value.provincia,
-                    departamento: partsByType['administrative_area_level_1'] ?? value.departamento,
-                    postalCode: partsByType['postal_code'] ?? value.postalCode,
+                        ?? current.distrito,
+                    provincia: partsByType['administrative_area_level_2'] ?? current.provincia,
+                    departamento: partsByType['administrative_area_level_1'] ?? current.departamento,
+                    postalCode: partsByType['postal_code'] ?? current.postalCode,
                 };
-                onChange(next);
+                onChangeRef.current(next);
             });
 
-            setAutocompleteReady(true);
+            if (!cancelled) setAutocompleteReady(true);
         });
+
         return () => {
             cancelled = true;
+            // Tear down the listener + dropdown container Google appends to
+            // <body>. Without this, switching country (or unmounting the
+            // checkout) leaks Autocomplete instances + their pac-container
+            // popovers — each one keeps a reference to the input element
+            // and a place_changed listener that still fires.
+            if (listener && window.google?.maps?.event) {
+                window.google.maps.event.removeListener(listener);
+            }
+            if (autocomplete && window.google?.maps?.event) {
+                window.google.maps.event.clearInstanceListeners(autocomplete);
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [value.country]);

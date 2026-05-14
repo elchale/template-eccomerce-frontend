@@ -44,9 +44,19 @@ export function ModalBase() {
     useFocusTrap(contentRef, isModalOpen && !isClosing);
 
     // Close modal on route change.
+    // Tracks the previous pathname in a ref so this effect ONLY fires
+    // when the route actually changes — without the ref, the effect re-runs
+    // every time `isModalOpen` flips (since it'd be in the dep array) and
+    // closes the modal in the same tick it opens. The previous version
+    // shipped this bug; every `openModal()` call (cart-row delete,
+    // admin cancel/refund, etc.) flashed open and closed immediately.
+    const prevPathnameRef = useRef(location.pathname);
     useEffect(() => {
-        if (isModalOpen && !isClosing) {
-            closeModal();
+        if (prevPathnameRef.current !== location.pathname) {
+            prevPathnameRef.current = location.pathname;
+            if (isModalOpen && !isClosing) {
+                closeModal();
+            }
         }
     }, [location.pathname, isModalOpen, isClosing, closeModal]);
 
