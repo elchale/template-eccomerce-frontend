@@ -26,11 +26,11 @@ const PROXIED_PATHS = ['/api', '/auth', '/media', '/static', '/ws'];
 
 const DEV_CSP = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://maps.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.micuentaweb.pe",
     "img-src 'self' data: blob: https: http://127.0.0.1:* http://localhost:*",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:* https: https://accounts.google.com https://oauth2.googleapis.com https://static.micuentaweb.pe https://api.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net",
+    "connect-src 'self' ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:* https: https://accounts.google.com https://oauth2.googleapis.com https://static.micuentaweb.pe https://api.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com",
     'frame-src https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net',
     "base-uri 'self'",
     "form-action 'self'",
