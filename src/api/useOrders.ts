@@ -1,13 +1,15 @@
 /**
  * Customer order queries + checkout mutation.
  *
- * Checkout creates a pending order; the payment IPN clears the cart and
- * promotes the order to `paid`. That's why `useCheckout` deliberately does
- * NOT invalidate the cart cache — doing so before payment confirmation
- * would mislead the user into thinking their cart is empty (ADR D5).
+ * Checkout creates a pending order. The backend clears the user's cart at
+ * order creation (the order is now the source of truth for "what the user
+ * is buying"; if they bail before paying they can resume from the order
+ * detail page). We invalidate the cart query here so the navbar badge +
+ * cart drawer reflect the empty cart immediately.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { CART_KEYS } from '@/api/useCart';
 import { API_ROUTES } from '@/constants/routes';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -55,10 +57,11 @@ export const useCheckout = () => {
             return data;
         },
         onSuccess: () => {
-            // Only invalidate orders — cart is cleared server-side when the IPN
-            // confirms payment (ADR D5). Invalidating cart here would mislead the
-            // user into thinking it's empty before they've actually paid.
+            // Backend clears the cart at order creation now, so refresh both
+            // caches: orders so the new pending row shows up + the unpaid
+            // badge updates, and cart so the navbar drawer + badge zero out.
             queryClient.invalidateQueries({ queryKey: KEYS.all });
+            queryClient.invalidateQueries({ queryKey: CART_KEYS.all });
         },
     });
 };

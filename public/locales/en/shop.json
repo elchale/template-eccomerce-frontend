@@ -194,6 +194,8 @@
   "payment_qty": "Qty: {{count}}",
   "payment_secure_note": "Secure payment processed by Izipay",
   "payment_back_to_checkout": "Back to cart",
+  "payment_back_to_order": "Back to order",
+  "nav_pending_orders_aria": "{{count}} pending orders to pay",
   "payment_total_to_pay": "Total to pay",
   "payment_token_failed": "Couldn't prepare payment. Please try again.",
   "payment_provider_down": "Payment provider didn't respond. Please try again in a few minutes.",

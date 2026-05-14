@@ -230,14 +230,17 @@ export function CheckoutPaymentPage() {
 
     return (
         <div className={styles.container}>
-            {/* Back link */}
+            {/* Back link — the cart is empty by the time we land here
+                (cleared on order creation), so the cart is the wrong
+                destination. Route back to the order detail page where the
+                user can resume payment later, see status, or cancel. */}
             <Link
-                to={ROUTES.cart}
+                to={ROUTES.orderDetail.replace(':orderNumber', orderNumber)}
                 className={styles.backLink}
-                aria-label={t('payment_back_to_checkout')}
+                aria-label={t('payment_back_to_order')}
             >
                 <ArrowLeft size={16} weight="bold" aria-hidden="true" />
-                {t('payment_back_to_checkout')}
+                {t('payment_back_to_order')}
             </Link>
 
             <h1 className={styles.pageTitle}>

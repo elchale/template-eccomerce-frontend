@@ -194,6 +194,8 @@
   "payment_qty": "Qtd: {{count}}",
   "payment_secure_note": "Pagamento seguro processado pelo Izipay",
   "payment_back_to_checkout": "Voltar ao carrinho",
+  "payment_back_to_order": "Voltar ao pedido",
+  "nav_pending_orders_aria": "{{count}} pedidos pendentes de pagamento",
   "payment_total_to_pay": "Total a pagar",
   "payment_token_failed": "Não foi possível preparar o pagamento. Tente novamente.",
   "payment_provider_down": "O provedor de pagamento não respondeu. Tente em alguns minutos.",
