@@ -15,6 +15,7 @@ import {
 import { Input, Select } from '@/components/forms';
 import { Button, Spinner, Card } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
+import { applyServerErrors } from '@/lib/applyServerErrors';
 import type { AdminProductRequest } from '@/types/admin';
 import type { ProductImage } from '@/types/product';
 
@@ -70,6 +71,12 @@ export function AdminProductForm() {
     const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
     const [translationTab, setTranslationTab] = useState<'es' | 'en' | 'pt'>('es');
 
+    // Server-side per-field errors keyed by backend snake_case field name —
+    // populated in `onError` via applyServerErrors, cleared at the start of
+    // every submit. Each Input below reads its own slot.
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const errorFor = (key: string): string | undefined => fieldErrors[key];
+
     useEffect(() => {
         if (productDetail && categories) {
             setName(productDetail.name_es || productDetail.name);
@@ -118,6 +125,10 @@ export function AdminProductForm() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // Clear stale field errors at the start of every submit so a
+        // previously-failed field doesn't keep its red message after the
+        // user fixes it.
+        setFieldErrors({});
 
         if (!name.trim() || !sku.trim() || !basePrice.trim()) {
             toast.error(t('product_form_required_fields'));
@@ -146,6 +157,15 @@ export function AdminProductForm() {
             ...(compareAtPrice && { compare_at_price: compareAtPrice }),
         };
 
+        // Auto-flip the translation tab to the language that produced the
+        // first error so the inline message is visible. Product form has
+        // three translated fields per language: name_xx, description_xx.
+        const switchToTabFor = (field: string) => {
+            if (field.endsWith('_en')) setTranslationTab('en');
+            else if (field.endsWith('_pt')) setTranslationTab('pt');
+            else if (field.endsWith('_es')) setTranslationTab('es');
+        };
+
         if (isEditing) {
             updateProduct.mutate(
                 { id: productId, ...productData },
@@ -154,7 +174,16 @@ export function AdminProductForm() {
                         toast.success(t('product_form_updated'));
                         navigate(ROUTES.adminProducts);
                     },
-                    onError: () => toast.error(t('product_form_update_error')),
+                    onError: (error) => {
+                        const applied = applyServerErrors({
+                            error,
+                            toast,
+                            fallbackMessage: t('product_form_update_error'),
+                            onFieldError: (field, message) =>
+                                setFieldErrors((prev) => ({ ...prev, [field]: message })),
+                        });
+                        if (applied[0]) switchToTabFor(applied[0]);
+                    },
                 },
             );
         } else {
@@ -163,7 +192,16 @@ export function AdminProductForm() {
                     toast.success(t('product_form_created'));
                     navigate(ROUTES.adminProductEdit.replace(':id', String(data.id)));
                 },
-                onError: () => toast.error(t('product_form_create_error')),
+                onError: (error) => {
+                    const applied = applyServerErrors({
+                        error,
+                        toast,
+                        fallbackMessage: t('product_form_create_error'),
+                        onFieldError: (field, message) =>
+                            setFieldErrors((prev) => ({ ...prev, [field]: message })),
+                    });
+                    if (applied[0]) switchToTabFor(applied[0]);
+                },
             });
         }
     };
@@ -260,6 +298,7 @@ export function AdminProductForm() {
                                     placeholder={t('product_form_name_placeholder')}
                                     variant="bordered"
                                     isRequired
+                                    errorMessage={errorFor('name_es') ?? errorFor('name')}
                                 />
                             </div>
                         )}
@@ -272,6 +311,7 @@ export function AdminProductForm() {
                                     setValue={setNameEn}
                                     placeholder={t('product_form_name_placeholder')}
                                     variant="bordered"
+                                    errorMessage={errorFor('name_en')}
                                 />
                             </div>
                         )}
@@ -284,6 +324,7 @@ export function AdminProductForm() {
                                     setValue={setNamePt}
                                     placeholder={t('product_form_name_placeholder')}
                                     variant="bordered"
+                                    errorMessage={errorFor('name_pt')}
                                 />
                             </div>
                         )}
@@ -297,6 +338,7 @@ export function AdminProductForm() {
                                 placeholder={t('product_form_slug_placeholder')}
                                 variant="bordered"
                                 isRequired
+                                errorMessage={errorFor('slug')}
                             />
                         </div>
 
@@ -311,6 +353,7 @@ export function AdminProductForm() {
                                     variant="bordered"
                                     multiline
                                     rows={4}
+                                    errorMessage={errorFor('description_es') ?? errorFor('description')}
                                 />
                             </div>
                         )}
@@ -325,6 +368,7 @@ export function AdminProductForm() {
                                     variant="bordered"
                                     multiline
                                     rows={4}
+                                    errorMessage={errorFor('description_en')}
                                 />
                             </div>
                         )}
@@ -339,6 +383,7 @@ export function AdminProductForm() {
                                     variant="bordered"
                                     multiline
                                     rows={4}
+                                    errorMessage={errorFor('description_pt')}
                                 />
                             </div>
                         )}
@@ -366,6 +411,7 @@ export function AdminProductForm() {
                                 placeholder={t('product_form_sku_placeholder')}
                                 variant="bordered"
                                 isRequired
+                                errorMessage={errorFor('sku')}
                             />
                         </div>
 
@@ -378,6 +424,7 @@ export function AdminProductForm() {
                                 placeholder="0.00"
                                 variant="bordered"
                                 isRequired
+                                errorMessage={errorFor('base_price')}
                             />
                         </div>
 
@@ -389,6 +436,7 @@ export function AdminProductForm() {
                                 setValue={setCompareAtPrice}
                                 placeholder={t('product_form_compare_price_placeholder')}
                                 variant="bordered"
+                                errorMessage={errorFor('compare_at_price')}
                             />
                         </div>
 
@@ -400,6 +448,7 @@ export function AdminProductForm() {
                                 setValue={setStock}
                                 placeholder="0"
                                 variant="bordered"
+                                errorMessage={errorFor('stock')}
                             />
                         </div>
                     </div>

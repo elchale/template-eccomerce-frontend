@@ -31,6 +31,7 @@ import {
 } from '@/components/ui';
 import { INITIAL_COUPON_FORM } from '@/constants/adminForms';
 import { PAGINATION } from '@/constants/pagination';
+import { applyServerErrors } from '@/lib/applyServerErrors';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { couponSchema, type CouponFormValues } from '@/types/adminFormSchemas';
 import type { Coupon } from '@/types/order';
@@ -67,7 +68,7 @@ export function AdminCouponList() {
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
 
-    const { control, register, handleSubmit, reset, watch } = useForm<
+    const { control, register, handleSubmit, reset, watch, setError } = useForm<
         CouponFormInput,
         unknown,
         CouponFormValues
@@ -129,7 +130,14 @@ export function AdminCouponList() {
                         toast.success(t('coupons_updated'));
                         closeForm();
                     },
-                    onError: () => toast.error(t('coupons_update_error')),
+                    onError: (error) => {
+                        applyServerErrors<CouponFormInput>({
+                            error,
+                            setError,
+                            toast,
+                            fallbackMessage: t('coupons_update_error'),
+                        });
+                    },
                 },
             );
         } else {
@@ -138,7 +146,14 @@ export function AdminCouponList() {
                     toast.success(t('coupons_created'));
                     closeForm();
                 },
-                onError: () => toast.error(t('coupons_create_error')),
+                onError: (error) => {
+                    applyServerErrors<CouponFormInput>({
+                        error,
+                        setError,
+                        toast,
+                        fallbackMessage: t('coupons_create_error'),
+                    });
+                },
             });
         }
     };

@@ -17,6 +17,7 @@ import { FormInput } from '@/components/forms/FormField/FormInput';
 import { Button, Spinner } from '@/components/ui';
 import { INITIAL_BANNER_FORM } from '@/constants/adminForms';
 import { ROUTES } from '@/constants/routes';
+import { applyServerErrors } from '@/lib/applyServerErrors';
 import { bannerSchema, type BannerFormValues } from '@/types/adminFormSchemas';
 
 // `BannerFormValues` is the output type of the zod schema. RHF's resolver
@@ -54,12 +55,23 @@ export function AdminBannerForm() {
         register,
         handleSubmit,
         setValue,
+        setError,
         reset,
         formState: { errors },
     } = useForm<BannerFormInput, unknown, BannerFormValues>({
         resolver: zodResolver(bannerSchema),
         defaultValues: INITIAL_BANNER_FORM,
     });
+
+    // Backend serializer keys (snake_case) match the form fields verbatim
+    // — no remap needed. If a translated field (e.g. titulo_pt) fails,
+    // auto-flip to its tab so the inline error is visible without making
+    // the user hunt for it.
+    const switchToTabFor = (field: string) => {
+        if (field.endsWith('_en')) setTranslationTab('en');
+        else if (field.endsWith('_pt')) setTranslationTab('pt');
+        else if (field.endsWith('_es')) setTranslationTab('es');
+    };
 
     useEffect(() => {
         if (existing) {
@@ -120,7 +132,15 @@ export function AdminBannerForm() {
                         toast.success(t('banner_form_updated'));
                         navigate(ROUTES.adminMarketingBanners);
                     },
-                    onError: () => toast.error(t('banner_form_update_error')),
+                    onError: (error) => {
+                        const applied = applyServerErrors<BannerFormInput>({
+                            error,
+                            setError,
+                            toast,
+                            fallbackMessage: t('banner_form_update_error'),
+                        });
+                        if (applied[0]) switchToTabFor(applied[0]);
+                    },
                 },
             );
         } else {
@@ -129,7 +149,15 @@ export function AdminBannerForm() {
                     toast.success(t('banner_form_created'));
                     navigate(ROUTES.adminMarketingBanners);
                 },
-                onError: () => toast.error(t('banner_form_create_error')),
+                onError: (error) => {
+                    const applied = applyServerErrors<BannerFormInput>({
+                        error,
+                        setError,
+                        toast,
+                        fallbackMessage: t('banner_form_create_error'),
+                    });
+                    if (applied[0]) switchToTabFor(applied[0]);
+                },
             });
         }
     };

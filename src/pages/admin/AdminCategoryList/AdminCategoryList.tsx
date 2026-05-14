@@ -29,6 +29,7 @@ import {
     TableColumn,
 } from '@/components/ui';
 import { INITIAL_CATEGORY_FORM } from '@/constants/adminForms';
+import { applyServerErrors } from '@/lib/applyServerErrors';
 import type { AdminCategory, AdminCategoryRequest } from '@/types/admin';
 import { categorySchema, type CategoryFormValues } from '@/types/adminFormSchemas';
 
@@ -68,12 +69,24 @@ export function AdminCategoryList() {
         reset,
         watch,
         setValue,
+        setError,
         getValues,
         formState: { errors },
     } = useForm<CategoryFormInput, unknown, CategoryFormValues>({
         resolver: zodResolver(categorySchema),
         defaultValues: INITIAL_CATEGORY_FORM,
     });
+
+    // Backend serializer accepts `name_es` while the form holds `name` for
+    // the default-language input. Map it so a `name_es: ['...']` from the
+    // server attaches the error to the visible field. Translation tabs:
+    // auto-switch on `name_en` / `name_pt`.
+    const fieldMap = { name_es: 'name' as const };
+
+    const switchToTabFor = (field: string) => {
+        if (field.endsWith('_en')) setTranslationTab('en');
+        else if (field.endsWith('_pt')) setTranslationTab('pt');
+    };
 
     // Auto-slug: watch `name`, regenerate slug while user hasn't manually edited it.
     const watchedName = watch('name');
@@ -164,7 +177,16 @@ export function AdminCategoryList() {
                         toast.success(t('categories_updated'));
                         closeForm();
                     },
-                    onError: () => toast.error(t('categories_update_error')),
+                    onError: (error) => {
+                        const applied = applyServerErrors<CategoryFormInput>({
+                            error,
+                            setError,
+                            fieldMap,
+                            toast,
+                            fallbackMessage: t('categories_update_error'),
+                        });
+                        if (applied[0]) switchToTabFor(applied[0]);
+                    },
                 },
             );
         } else {
@@ -173,7 +195,16 @@ export function AdminCategoryList() {
                     toast.success(t('categories_created'));
                     closeForm();
                 },
-                onError: () => toast.error(t('categories_create_error')),
+                onError: (error) => {
+                    const applied = applyServerErrors<CategoryFormInput>({
+                        error,
+                        setError,
+                        fieldMap,
+                        toast,
+                        fallbackMessage: t('categories_create_error'),
+                    });
+                    if (applied[0]) switchToTabFor(applied[0]);
+                },
             });
         }
     };

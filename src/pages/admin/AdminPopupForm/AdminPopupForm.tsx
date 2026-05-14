@@ -17,6 +17,7 @@ import { FormInput } from '@/components/forms/FormField/FormInput';
 import { Button, Spinner } from '@/components/ui';
 import { INITIAL_POPUP_FORM } from '@/constants/adminForms';
 import { ROUTES } from '@/constants/routes';
+import { applyServerErrors } from '@/lib/applyServerErrors';
 import { popupSchema, type PopupFormValues } from '@/types/adminFormSchemas';
 
 import styles from './AdminPopupForm.module.css';
@@ -51,12 +52,21 @@ export function AdminPopupForm() {
         register,
         handleSubmit,
         setValue,
+        setError,
         reset,
         formState: { errors },
     } = useForm<PopupFormInput, unknown, PopupFormValues>({
         resolver: zodResolver(popupSchema),
         defaultValues: INITIAL_POPUP_FORM,
     });
+
+    // Auto-switch translation tab to the language that produced the
+    // server error so the inline message is in view immediately.
+    const switchToTabFor = (field: string) => {
+        if (field.endsWith('_en')) setTranslationTab('en');
+        else if (field.endsWith('_pt')) setTranslationTab('pt');
+        else if (field.endsWith('_es')) setTranslationTab('es');
+    };
 
     useEffect(() => {
         if (existing) {
@@ -115,7 +125,15 @@ export function AdminPopupForm() {
                         toast.success(t('popup_form_updated'));
                         navigate(ROUTES.adminMarketingPopups);
                     },
-                    onError: () => toast.error(t('popup_form_update_error')),
+                    onError: (error) => {
+                        const applied = applyServerErrors<PopupFormInput>({
+                            error,
+                            setError,
+                            toast,
+                            fallbackMessage: t('popup_form_update_error'),
+                        });
+                        if (applied[0]) switchToTabFor(applied[0]);
+                    },
                 },
             );
         } else {
@@ -124,7 +142,15 @@ export function AdminPopupForm() {
                     toast.success(t('popup_form_created'));
                     navigate(ROUTES.adminMarketingPopups);
                 },
-                onError: () => toast.error(t('popup_form_create_error')),
+                onError: (error) => {
+                    const applied = applyServerErrors<PopupFormInput>({
+                        error,
+                        setError,
+                        toast,
+                        fallbackMessage: t('popup_form_create_error'),
+                    });
+                    if (applied[0]) switchToTabFor(applied[0]);
+                },
             });
         }
     };
