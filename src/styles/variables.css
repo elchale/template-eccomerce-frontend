@@ -216,10 +216,16 @@
     --blur-md: 8px;
     --blur-lg: 16px;
 
-    /* Z-Index Scale */
+    /* Z-Index Scale.
+     *
+     * Strict ordering matters: a confirm modal can be opened FROM inside
+     * a drawer (e.g. "Eliminar" inside the cart drawer), so --z-modal
+     * MUST be strictly greater than --z-drawer or the modal renders
+     * behind the drawer overlay. */
     --z-base: 1;
-    --z-dropdown: 100;
-    --z-modal: 200;
+    --z-dropdown: 100;   /* navbar, search, sticky CTAs, language switcher */
+    --z-drawer: 150;     /* slide-over panels (cart drawer, mobile menu)   */
+    --z-modal: 200;      /* global ModalBase — always above drawers        */
     --z-toast: 300;
     --z-banner: 400;
 

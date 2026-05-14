@@ -366,7 +366,10 @@
     .mobileOverlay {
         position: fixed;
         inset: 0;
-        z-index: 99;
+        /* Slide-over drawer scale — kept below --z-modal so any modal
+         * opened from inside the mobile menu (e.g. logout confirm)
+         * surfaces above it. */
+        z-index: var(--z-drawer);
         display: block;
         background: rgb(0 0 0 / 30%);
     }
@@ -376,7 +379,7 @@
         top: 0;
         bottom: 0;
         left: 0;
-        z-index: 100;
+        z-index: calc(var(--z-drawer) + 1);
         display: flex;
         flex-direction: column;
         width: 280px;

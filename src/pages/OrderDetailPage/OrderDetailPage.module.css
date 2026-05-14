@@ -25,10 +25,20 @@
     color: var(--color-text-secondary);
 }
 
-/* Back Link */
+/* Back Link.
+ *
+ * Inline-flex + align-items centre the ArrowLeft icon vertically against
+ * the text — without this the SVG sits on the text baseline (looks lifted
+ * by ~3px). `line-height: 1` removes the extra vertical space the text's
+ * default line-height would add around the centring axis. */
 .backLink {
+    display: inline-flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    width: fit-content;
     font-size: var(--text-sm);
     font-weight: 500;
+    line-height: 1;
     color: var(--color-primary);
     text-decoration: none;
 }
