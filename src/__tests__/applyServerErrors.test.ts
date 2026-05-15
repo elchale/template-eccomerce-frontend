@@ -12,7 +12,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-import { applyServerErrors } from '@/lib/applyServerErrors';
+import { applyServerErrors, type ToastEmitter } from '@/lib/applyServerErrors';
 
 function makeAxiosError(status: number | undefined, data: unknown) {
     return {
@@ -20,8 +20,8 @@ function makeAxiosError(status: number | undefined, data: unknown) {
     };
 }
 
-function makeToast() {
-    return { error: vi.fn() } as unknown as Parameters<typeof applyServerErrors>[0]['toast'];
+function makeToast(): ToastEmitter {
+    return { error: vi.fn() };
 }
 
 describe('applyServerErrors', () => {

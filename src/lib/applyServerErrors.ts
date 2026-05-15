@@ -17,8 +17,18 @@
  * a contextual summary toast.
  */
 import type { AxiosError } from 'axios';
-import type toast from 'react-hot-toast';
 import type { FieldValues, Path, UseFormSetError } from 'react-hook-form';
+
+/**
+ * Minimal slice of `react-hot-toast` the helper depends on. Typing the
+ * option this narrowly (rather than `typeof toast`) keeps the real `toast`
+ * object assignable while also accepting lightweight mocks in tests — the
+ * full toast type is incompatible with partial objects under
+ * `exactOptionalPropertyTypes`.
+ */
+export interface ToastEmitter {
+    error: (message: string, opts?: { duration?: number }) => unknown;
+}
 
 interface ErrorEnvelope {
     message?: string;
@@ -55,7 +65,7 @@ interface ApplyServerErrorsOptions<TForm extends FieldValues> {
     fallbackMessage: string;
     /** Toast emitter — usually `react-hot-toast`'s `toast`. Pass to opt
      *  into the contextual summary toast. */
-    toast?: typeof toast;
+    toast?: ToastEmitter;
     /** Toast duration — defaults to the UX-standards' 8s for errors. */
     toastDuration?: number;
     /** Called once per backend field error AFTER the RHF setError. Use to
