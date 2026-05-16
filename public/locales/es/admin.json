@@ -494,5 +494,49 @@
   "store_section_seo_og_image": "Imagen para compartir (OG)",
   "store_section_shipping_title": "Envío y moneda",
   "store_section_shipping_currency": "Moneda (ISO)",
-  "store_section_shipping_free_threshold": "Envío gratis desde (monto)"
+  "store_section_shipping_free_threshold": "Envío gratis desde (monto)",
+
+  "nav_email_logs": "Registro de correos",
+
+  "email_log_title": "Registro de correos",
+  "email_log_filter_status": "Filtrar por estado",
+  "email_log_filter_all": "Todos los estados",
+  "email_log_status_pending": "Pendiente",
+  "email_log_status_retrying": "Reintentando",
+  "email_log_status_confirmed": "Confirmado",
+  "email_log_status_failed": "Fallido",
+
+  "email_log_col_objetivo": "Objetivo",
+  "email_log_col_destinatario": "Destinatario",
+  "email_log_col_estado": "Estado",
+  "email_log_col_fecha": "Fecha",
+  "email_log_col_actions": "Acciones",
+
+  "email_log_inspect": "Inspeccionar",
+  "email_log_retry_btn": "Reintentar",
+
+  "email_log_empty_title": "Aún no hay correos registrados",
+  "email_log_empty_message": "Cuando se envíe un correo de pedido, aparecerá aquí con su estado.",
+  "email_log_empty_filtered_title": "Sin resultados",
+  "email_log_empty_filtered_message": "No hay correos con este estado. Prueba con otro filtro.",
+  "email_log_empty_filtered_cta": "Quitar filtro",
+
+  "email_log_load_error": "No se pudo cargar el registro de correos",
+  "email_log_load_error_message": "Hubo un error al cargar los datos. Intenta de nuevo.",
+
+  "email_log_retry_success": "Correo reenviado. Revisa el estado en unos segundos.",
+  "email_log_retry_409": "Este correo no se puede reintentar todavía. Solo se reintentan los correos fallidos o los que llevan demasiado tiempo sin enviarse.",
+  "email_log_retry_404": "Este registro de correo ya no existe.",
+  "email_log_retry_error": "No se pudo reenviar el correo. Inténtalo de nuevo.",
+
+  "email_log_detail_title": "Detalle del correo",
+  "email_log_detail_template": "Plantilla",
+  "email_log_detail_task": "Tarea",
+  "email_log_detail_subject": "Asunto",
+  "email_log_detail_order": "Pedido",
+  "email_log_detail_attempts": "Intentos",
+  "email_log_detail_error": "Error",
+  "email_log_detail_sent_at": "Enviado el",
+  "email_log_detail_last_attempt": "Último intento",
+  "email_log_detail_created": "Creado el"
 }

@@ -494,5 +494,49 @@
   "store_section_seo_og_image": "Sharing image (OG)",
   "store_section_shipping_title": "Shipping and currency",
   "store_section_shipping_currency": "Currency (ISO)",
-  "store_section_shipping_free_threshold": "Free shipping above (amount)"
+  "store_section_shipping_free_threshold": "Free shipping above (amount)",
+
+  "nav_email_logs": "Email Log",
+
+  "email_log_title": "Email Log",
+  "email_log_filter_status": "Filter by status",
+  "email_log_filter_all": "All statuses",
+  "email_log_status_pending": "Pending",
+  "email_log_status_retrying": "Retrying",
+  "email_log_status_confirmed": "Confirmed",
+  "email_log_status_failed": "Failed",
+
+  "email_log_col_objetivo": "Objective",
+  "email_log_col_destinatario": "Recipient",
+  "email_log_col_estado": "Status",
+  "email_log_col_fecha": "Date",
+  "email_log_col_actions": "Actions",
+
+  "email_log_inspect": "Inspect",
+  "email_log_retry_btn": "Retry",
+
+  "email_log_empty_title": "No emails logged yet",
+  "email_log_empty_message": "When an order email is sent, it will appear here with its status.",
+  "email_log_empty_filtered_title": "No results",
+  "email_log_empty_filtered_message": "No emails with this status. Try a different filter.",
+  "email_log_empty_filtered_cta": "Clear filter",
+
+  "email_log_load_error": "Failed to load email log",
+  "email_log_load_error_message": "There was an error loading the data. Please try again.",
+
+  "email_log_retry_success": "Email resent. Check the status in a few seconds.",
+  "email_log_retry_409": "This email cannot be retried yet. Only failed emails or those stuck for too long can be retried.",
+  "email_log_retry_404": "This email log entry no longer exists.",
+  "email_log_retry_error": "Could not resend the email. Please try again.",
+
+  "email_log_detail_title": "Email Detail",
+  "email_log_detail_template": "Template",
+  "email_log_detail_task": "Task",
+  "email_log_detail_subject": "Subject",
+  "email_log_detail_order": "Order",
+  "email_log_detail_attempts": "Attempts",
+  "email_log_detail_error": "Error",
+  "email_log_detail_sent_at": "Sent at",
+  "email_log_detail_last_attempt": "Last attempt",
+  "email_log_detail_created": "Created at"
 }

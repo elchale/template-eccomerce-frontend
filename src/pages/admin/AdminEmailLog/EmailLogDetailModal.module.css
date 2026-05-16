@@ -1,0 +1,129 @@
+.modal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+}
+
+.title {
+    margin: 0;
+    font-size: var(--text-xl, 1.25rem);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.closeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-sm);
+    height: var(--size-sm);
+    padding: 0;
+    font-size: var(--icon-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.closeBtn:hover {
+    color: var(--color-text);
+    background-color: var(--color-bg-muted);
+}
+
+.detailList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: 0;
+    padding: 0;
+}
+
+.detailRow {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detailRow:last-child {
+    border-bottom: none;
+}
+
+.detailLabel {
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    padding-top: 2px;
+}
+
+.detailValue {
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text);
+    word-break: break-all;
+    margin: 0;
+}
+
+.codeValue {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: var(--text-xs, 0.75rem);
+    font-family: monospace;
+    color: var(--color-primary);
+    background-color: var(--color-bg-subtle);
+    border-radius: var(--radius-sm);
+    word-break: break-all;
+}
+
+.errorText {
+    color: var(--color-error);
+    font-size: var(--text-sm, 0.875rem);
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border);
+}
+
+.closeBtnPrimary {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 600;
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-bg-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: background 0.15s;
+}
+
+.closeBtnPrimary:hover {
+    background: var(--color-bg-subtle);
+}
+
+@media (width <= 640px) {
+    .detailRow {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+    }
+
+    .modal {
+        max-width: 100%;
+    }
+}

@@ -116,6 +116,10 @@ const AdminThemeSettings = lazyNamed(
     () => import('./pages/admin/AdminThemeSettings/AdminThemeSettings'),
     'AdminThemeSettings',
 );
+const AdminEmailLog = lazyNamed(
+    () => import('./pages/admin/AdminEmailLog/AdminEmailLog'),
+    'AdminEmailLog',
+);
 const Dashboard = lazyNamed(() => import('./pages/admin/Dashboard/Dashboard'), 'Dashboard');
 
 import './App.css';
@@ -213,6 +217,7 @@ function AppInner() {
                         <Route path="marketing/popups/:id/edit" element={<AdminPopupForm />} />
                         <Route path="marketing/config" element={<AdminStoreConfig />} />
                         <Route path="theme" element={<AdminThemeSettings />} />
+                        <Route path="email-logs" element={<AdminEmailLog />} />
                     </Route>
                 </Route>
 

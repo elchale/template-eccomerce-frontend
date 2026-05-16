@@ -85,3 +85,9 @@ export {
     useAdminResetTheme,
     ADMIN_THEME_KEYS,
 } from './useAdminTheme';
+
+export {
+    useAdminEmailLogs,
+    useRetryEmailLog,
+    EMAIL_LOG_KEYS,
+} from './useAdminEmailLogs';

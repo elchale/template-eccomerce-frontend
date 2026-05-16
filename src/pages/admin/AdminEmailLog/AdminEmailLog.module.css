@@ -1,0 +1,92 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.headerCard {
+    padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.toolbar {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filterGroup {
+    width: 220px;
+}
+
+.objetivo {
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.email {
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text-secondary);
+    word-break: break-all;
+}
+
+.date {
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.iconBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-sm);
+    height: var(--size-sm);
+    font-size: var(--icon-md);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+}
+
+.iconBtn:hover {
+    color: var(--color-primary);
+    background-color: var(--color-bg-subtle);
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    padding-top: var(--spacing-md);
+}
+
+@media (width <= 640px) {
+    .filterGroup {
+        width: 100%;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (width <= 768px) {
+    .objetivo {
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}

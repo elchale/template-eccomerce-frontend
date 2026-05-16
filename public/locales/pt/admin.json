@@ -494,5 +494,49 @@
   "store_section_seo_og_image": "Imagem para compartilhar (OG)",
   "store_section_shipping_title": "Envio e moeda",
   "store_section_shipping_currency": "Moeda (ISO)",
-  "store_section_shipping_free_threshold": "Frete grátis acima de (valor)"
+  "store_section_shipping_free_threshold": "Frete grátis acima de (valor)",
+
+  "nav_email_logs": "Registro de e-mails",
+
+  "email_log_title": "Registro de e-mails",
+  "email_log_filter_status": "Filtrar por estado",
+  "email_log_filter_all": "Todos os estados",
+  "email_log_status_pending": "Pendente",
+  "email_log_status_retrying": "Tentando novamente",
+  "email_log_status_confirmed": "Confirmado",
+  "email_log_status_failed": "Falhou",
+
+  "email_log_col_objetivo": "Objetivo",
+  "email_log_col_destinatario": "Destinatário",
+  "email_log_col_estado": "Estado",
+  "email_log_col_fecha": "Data",
+  "email_log_col_actions": "Ações",
+
+  "email_log_inspect": "Inspecionar",
+  "email_log_retry_btn": "Reenviar",
+
+  "email_log_empty_title": "Nenhum e-mail registrado ainda",
+  "email_log_empty_message": "Quando um e-mail de pedido for enviado, aparecerá aqui com seu estado.",
+  "email_log_empty_filtered_title": "Sem resultados",
+  "email_log_empty_filtered_message": "Nenhum e-mail com este estado. Tente outro filtro.",
+  "email_log_empty_filtered_cta": "Remover filtro",
+
+  "email_log_load_error": "Não foi possível carregar o registro de e-mails",
+  "email_log_load_error_message": "Ocorreu um erro ao carregar os dados. Tente novamente.",
+
+  "email_log_retry_success": "E-mail reenviado. Verifique o estado em alguns segundos.",
+  "email_log_retry_409": "Este e-mail ainda não pode ser reenviado. Só e-mails com falha ou presos há muito tempo podem ser reenviados.",
+  "email_log_retry_404": "Este registro de e-mail não existe mais.",
+  "email_log_retry_error": "Não foi possível reenviar o e-mail. Tente novamente.",
+
+  "email_log_detail_title": "Detalhe do e-mail",
+  "email_log_detail_template": "Template",
+  "email_log_detail_task": "Tarefa",
+  "email_log_detail_subject": "Assunto",
+  "email_log_detail_order": "Pedido",
+  "email_log_detail_attempts": "Tentativas",
+  "email_log_detail_error": "Erro",
+  "email_log_detail_sent_at": "Enviado em",
+  "email_log_detail_last_attempt": "Última tentativa",
+  "email_log_detail_created": "Criado em"
 }

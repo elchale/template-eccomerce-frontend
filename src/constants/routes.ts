@@ -54,6 +54,9 @@ export const ROUTES = {
 
     // Admin Theme
     adminTheme: '/admin/theme',
+
+    // Admin Email Logs
+    adminEmailLogs: '/admin/email-logs',
 };
 
 /**
@@ -156,6 +159,10 @@ export const API_ROUTES = {
     marketingTheme: '/api/marketing/theme/',
     adminMarketingTheme: '/api/admin/marketing/theme/',
     adminMarketingThemeReset: '/api/admin/marketing/theme/reset/',
+
+    // Email Logs
+    adminEmailLogs: '/api/admin/email-logs/',
+    adminEmailLogRetry: (id: number) => `/api/admin/email-logs/${id}/retry/`,
 };
 
 // Only these paths dont require to send a token

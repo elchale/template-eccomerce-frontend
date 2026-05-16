@@ -2,6 +2,7 @@ import {
     ArrowLeft,
     Browsers,
     ChartBar,
+    EnvelopeSimple,
     Gear,
     Image,
     List,
@@ -41,6 +42,12 @@ export function AdminLayout() {
         { to: ROUTES.adminOrders, icon: <ListBullets />, label: t('nav_orders'), end: false },
         { to: ROUTES.adminCoupons, icon: <Ticket />, label: t('nav_coupons'), end: false },
         { to: ROUTES.adminAnalytics, icon: <ChartBar />, label: t('nav_analytics'), end: false },
+        {
+            to: ROUTES.adminEmailLogs,
+            icon: <EnvelopeSimple />,
+            label: t('nav_email_logs'),
+            end: false,
+        },
     ];
 
     const MARKETING_NAV_ITEMS = [
