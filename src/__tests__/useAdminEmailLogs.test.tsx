@@ -109,7 +109,7 @@ describe('useAdminEmailLogs', () => {
             expect.objectContaining({ params: undefined }),
         );
         expect(result.current.data?.count).toBe(1);
-        expect(result.current.data?.results[0].email_type_display).toBe('Pago confirmado — cliente');
+        expect(result.current.data?.results[0]?.email_type_display).toBe('Pago confirmado — cliente');
     });
 
     it('passes status filter param to the API', async () => {

@@ -225,7 +225,7 @@ describe('AdminEmailLog', () => {
         });
 
         // Simulate a successful mutation by calling onSuccess callback immediately
-        const mutate = vi.fn((id: number, callbacks?: { onSuccess?: () => void }) => {
+        const mutate = vi.fn((_id: number, callbacks?: { onSuccess?: () => void }) => {
             callbacks?.onSuccess?.();
         });
         mockUseRetryEmailLog.mockReturnValue({ mutate, isPending: false });
@@ -249,7 +249,7 @@ describe('AdminEmailLog', () => {
         });
 
         const mutate = vi.fn(
-            (id: number, callbacks?: { onError?: (err: unknown) => void }) => {
+            (_id: number, callbacks?: { onError?: (err: unknown) => void }) => {
                 callbacks?.onError?.({ response: { status: 409 } });
             },
         );
@@ -276,7 +276,7 @@ describe('AdminEmailLog', () => {
         });
 
         const mutate = vi.fn(
-            (id: number, callbacks?: { onError?: (err: unknown) => void }) => {
+            (_id: number, callbacks?: { onError?: (err: unknown) => void }) => {
                 callbacks?.onError?.({ response: { status: 500 } });
             },
         );

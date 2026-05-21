@@ -19,15 +19,15 @@ export interface MercadoPagoProcessPayload {
     /** Card brand (e.g. 'visa', 'master', 'amex'). */
     paymentMethodId: string;
     /** Issuer (bank) id — optional, supplied by the Brick when known. */
-    issuerId?: string;
+    issuerId?: string | undefined;
     /** Installments count (1 = pago al contado). */
     installments: number;
     /** Payer email captured by the Brick. */
     payerEmail: string;
     /** Identification type (DNI, CE, RUC). Optional but recommended. */
-    payerIdType?: string;
+    payerIdType?: string | undefined;
     /** Identification number. Optional but recommended. */
-    payerIdNumber?: string;
+    payerIdNumber?: string | undefined;
 }
 
 export interface MercadoPagoProcessResponse {
