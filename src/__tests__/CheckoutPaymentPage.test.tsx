@@ -1,14 +1,18 @@
 /**
  * Tests for CheckoutPaymentPage.
  *
+ * Mercado Pago is the active payment gateway (VITE_PAYMENT_GATEWAY defaults
+ * to 'mercadopago'), so these tests exercise the MP flow. The Culqi + Izipay
+ * paths are kept dormant — see usePayments / IzipayForm tests for those.
+ *
  * Verifies:
  * - Loading skeleton shown while order fetches
- * - Transitions loading → ready when formToken arrives
- * - On payment success: toast shown + navigate to order detail
- * - On error: "Reintentar" button visible and triggers refetch
+ * - MercadoPagoForm renders once the order is loaded (no separate prep step)
+ * - On Brick submit: backend processes payment, success toast shown, navigate to order
+ * - On in_process status: navigates with ?verifying=1
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type React from 'react';
 import toast from 'react-hot-toast';
@@ -30,6 +34,8 @@ vi.mock('react-i18next', () => ({
         t: (k: string, opts?: Record<string, unknown>) => {
             if (opts && 'count' in opts) return `${k}:${opts.count}`;
             if (opts && 'reason' in opts) return `${k}:${opts.reason}`;
+            if (opts && 'gateway' in opts) return `${k}:${opts.gateway}`;
+            if (opts && 'amount' in opts) return `${k}:${opts.amount}`;
             return k;
         },
         i18n: { language: 'es', changeLanguage: vi.fn() },
@@ -49,6 +55,9 @@ vi.mock('@/api/useOrders', () => ({
 }));
 
 vi.mock('@/api/usePayments', () => ({
+    useMercadoPagoProcess: vi.fn(),
+    useCulqiOrder: vi.fn(),
+    useCulqiCharge: vi.fn(),
     useIzipayToken: vi.fn(),
     useVerifyPayment: vi.fn(),
 }));
@@ -60,40 +69,58 @@ vi.mock('@/api/useCart', () => ({
     },
 }));
 
-vi.mock('@/components/payments/IzipayForm', () => ({
-    IzipayForm: ({
-        onSuccess,
+// Card form data shape returned by the MP Brick on submit.
+interface FakeMpCardFormData {
+    token: string;
+    payment_method_id: string;
+    issuer_id?: string;
+    installments: number;
+    transaction_amount: number;
+    payer: {
+        email: string;
+        identification?: { type: string; number: string };
+    };
+}
+
+vi.mock('@/components/payments', () => ({
+    MercadoPagoForm: ({
+        onPaymentReady,
         onError,
     }: {
-        formToken: string;
-        onSuccess: (r: unknown) => void;
-        onError: (e: unknown) => void;
+        publicKey: string;
+        amount: number;
+        email: string;
+        onPaymentReady: (d: FakeMpCardFormData) => Promise<void>;
+        onError: (m: string) => void;
     }) => (
-        <div data-testid="izipay-form">
+        <div data-testid="mercadopago-form">
             <button
                 onClick={() =>
-                    onSuccess({
-                        hash: 'abc',
-                        hashAlgorithm: 'sha256',
-                        hashKey: 'sha256_hmac',
-                        answer: {},
-                        rawAnswer: '{}',
-                        rawAvailable: true,
+                    onPaymentReady({
+                        token: 'mp_token_abc',
+                        payment_method_id: 'visa',
+                        issuer_id: '310',
+                        installments: 1,
+                        transaction_amount: 150,
+                        payer: {
+                            email: 'test@test.com',
+                            identification: { type: 'DNI', number: '12345678' },
+                        },
                     })
                 }
             >
-                pay-success-trigger
+                mp-submit-trigger
             </button>
-            <button onClick={() => onError({ errorCode: 'DECLINE', errorMessage: 'Declined' })}>
-                pay-error-trigger
-            </button>
+            <button onClick={() => onError('Tarjeta rechazada')}>mp-error-trigger</button>
         </div>
     ),
+    CulqiForm: () => <div data-testid="culqi-form" />,
+    IzipayForm: () => <div data-testid="izipay-form" />,
 }));
 
 // ── Actual imports after mocks ────────────────────────────────────────────
 import { useOrderDetail } from '@/api/useOrders';
-import { useIzipayToken, useVerifyPayment } from '@/api/usePayments';
+import { useMercadoPagoProcess } from '@/api/usePayments';
 import { CheckoutPaymentPage } from '@/pages/CheckoutPaymentPage/CheckoutPaymentPage';
 
 // ── Test helpers ──────────────────────────────────────────────────────────
@@ -149,7 +176,7 @@ const PENDING_ORDER = {
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 
-describe('CheckoutPaymentPage', () => {
+describe('CheckoutPaymentPage (Mercado Pago — active gateway)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -160,15 +187,11 @@ describe('CheckoutPaymentPage', () => {
             isLoading: true,
         } as unknown as ReturnType<typeof useOrderDetail>);
 
-        vi.mocked(useIzipayToken).mockReturnValue({
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
             mutate: vi.fn(),
-            isPending: false,
-        } as unknown as ReturnType<typeof useIzipayToken>);
-
-        vi.mocked(useVerifyPayment).mockReturnValue({
             mutateAsync: vi.fn(),
             isPending: false,
-        } as unknown as ReturnType<typeof useVerifyPayment>);
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
 
         const Wrapper = makeWrapper();
         render(
@@ -177,32 +200,21 @@ describe('CheckoutPaymentPage', () => {
             </Wrapper>,
         );
 
-        // Skeleton items are aria-hidden
         const skeletons = document.querySelectorAll('[aria-hidden="true"]');
         expect(skeletons.length).toBeGreaterThan(0);
     });
 
-    it('renders IzipayForm when token fetch succeeds (loading → ready)', async () => {
-        let capturedOnSuccess: ((d: { formToken: string }) => void) | null = null;
-
+    it('renders MercadoPagoForm once the order is loaded (no separate prep step)', async () => {
         vi.mocked(useOrderDetail).mockReturnValue({
             data: PENDING_ORDER,
             isLoading: false,
         } as unknown as ReturnType<typeof useOrderDetail>);
 
-        vi.mocked(useIzipayToken).mockReturnValue({
-            mutate: vi.fn(
-                (_params: unknown, opts: { onSuccess?: (d: { formToken: string }) => void }) => {
-                    capturedOnSuccess = opts?.onSuccess ?? null;
-                },
-            ),
-            isPending: false,
-        } as unknown as ReturnType<typeof useIzipayToken>);
-
-        vi.mocked(useVerifyPayment).mockReturnValue({
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
+            mutate: vi.fn(),
             mutateAsync: vi.fn(),
             isPending: false,
-        } as unknown as ReturnType<typeof useVerifyPayment>);
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
 
         const Wrapper = makeWrapper();
         render(
@@ -211,85 +223,29 @@ describe('CheckoutPaymentPage', () => {
             </Wrapper>,
         );
 
-        await act(async () => {
-            capturedOnSuccess?.({ formToken: 'test-form-token' });
-        });
-
         await waitFor(() => {
-            expect(screen.getByTestId('izipay-form')).toBeTruthy();
+            expect(screen.getByTestId('mercadopago-form')).toBeTruthy();
         });
     });
 
-    it('shows Reintentar button on error and refetches token on click', async () => {
-        let capturedOnError: (() => void) | null = null;
-
+    it('on Brick submit (paid): processes payment, shows success toast, navigates to order detail', async () => {
         vi.mocked(useOrderDetail).mockReturnValue({
             data: PENDING_ORDER,
             isLoading: false,
         } as unknown as ReturnType<typeof useOrderDetail>);
 
-        const mockMutate = vi.fn((_params: unknown, opts: { onError?: () => void }) => {
-            capturedOnError = opts?.onError ?? null;
-        });
-
-        vi.mocked(useIzipayToken).mockReturnValue({
-            mutate: mockMutate,
-            isPending: false,
-        } as unknown as ReturnType<typeof useIzipayToken>);
-
-        vi.mocked(useVerifyPayment).mockReturnValue({
-            mutateAsync: vi.fn(),
-            isPending: false,
-        } as unknown as ReturnType<typeof useVerifyPayment>);
-
-        const Wrapper = makeWrapper();
-        render(
-            <Wrapper>
-                <CheckoutPaymentPage />
-            </Wrapper>,
-        );
-
-        await act(async () => {
-            capturedOnError?.();
-        });
-
-        await waitFor(() => {
-            expect(screen.getByText('payment_retry')).toBeTruthy();
-        });
-
-        const user = userEvent.setup();
-        await user.click(screen.getByText('payment_retry'));
-
-        expect(mockMutate).toHaveBeenCalledTimes(2);
-    });
-
-    it('on payment success: calls verify, shows success toast, navigates to order detail', async () => {
-        let capturedOnSuccess: ((d: { formToken: string }) => void) | null = null;
-
-        vi.mocked(useOrderDetail).mockReturnValue({
-            data: PENDING_ORDER,
-            isLoading: false,
-        } as unknown as ReturnType<typeof useOrderDetail>);
-
-        vi.mocked(useIzipayToken).mockReturnValue({
-            mutate: vi.fn(
-                (_params: unknown, opts: { onSuccess?: (d: { formToken: string }) => void }) => {
-                    capturedOnSuccess = opts?.onSuccess ?? null;
-                },
-            ),
-            isPending: false,
-        } as unknown as ReturnType<typeof useIzipayToken>);
-
-        const mockMutateAsync = vi.fn().mockResolvedValue({
+        const mockMutateAsync = vi.fn(async () => ({
             paid: true,
-            order_status: 'PAID',
             order_number: 'QLCA-20260501-ABCD',
-        });
+            payment_id: '999999',
+            status: 'approved',
+        }));
 
-        vi.mocked(useVerifyPayment).mockReturnValue({
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
+            mutate: vi.fn(),
             mutateAsync: mockMutateAsync,
             isPending: false,
-        } as unknown as ReturnType<typeof useVerifyPayment>);
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
 
         const Wrapper = makeWrapper();
         render(
@@ -298,15 +254,11 @@ describe('CheckoutPaymentPage', () => {
             </Wrapper>,
         );
 
-        // Advance to ready state
-        await act(async () => {
-            capturedOnSuccess?.({ formToken: 'tok' });
-        });
-
-        await waitFor(() => screen.getByTestId('izipay-form'));
+        const brickForm = await screen.findByTestId('mercadopago-form');
+        expect(brickForm).toBeTruthy();
 
         const user = userEvent.setup();
-        await user.click(screen.getByText('pay-success-trigger'));
+        await user.click(screen.getByText('mp-submit-trigger'));
 
         await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
 
@@ -319,6 +271,47 @@ describe('CheckoutPaymentPage', () => {
         await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith(
                 expect.stringContaining('QLCA-20260501-ABCD'),
+            );
+        });
+    });
+
+    it('on Brick submit (in_process): navigates with verifying=1 instead of success', async () => {
+        vi.mocked(useOrderDetail).mockReturnValue({
+            data: PENDING_ORDER,
+            isLoading: false,
+        } as unknown as ReturnType<typeof useOrderDetail>);
+
+        const mockMutateAsync = vi.fn(async () => ({
+            paid: false,
+            order_number: 'QLCA-20260501-ABCD',
+            payment_id: '999999',
+            status: 'in_process',
+        }));
+
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
+            mutate: vi.fn(),
+            mutateAsync: mockMutateAsync,
+            isPending: false,
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
+
+        const Wrapper = makeWrapper();
+        render(
+            <Wrapper>
+                <CheckoutPaymentPage />
+            </Wrapper>,
+        );
+
+        const brickForm = await screen.findByTestId('mercadopago-form');
+        expect(brickForm).toBeTruthy();
+
+        const user = userEvent.setup();
+        await user.click(screen.getByText('mp-submit-trigger'));
+
+        await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith(
+                expect.stringMatching(/QLCA-20260501-ABCD\?verifying=1$/),
             );
         });
     });

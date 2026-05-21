@@ -9,7 +9,153 @@ export const PAYMENT_KEYS = {
     all: ['payments'] as const,
 } as const;
 
-// ─── Request / Response shapes ───────────────────────────────────────────────
+// ─── Mercado Pago (active gateway) ───────────────────────────────────────────
+
+export interface MercadoPagoProcessPayload {
+    /** Django order number (preferred). */
+    orderNumber: string;
+    /** Card token produced by the MP Card Payment Brick. */
+    token: string;
+    /** Card brand (e.g. 'visa', 'master', 'amex'). */
+    paymentMethodId: string;
+    /** Issuer (bank) id — optional, supplied by the Brick when known. */
+    issuerId?: string;
+    /** Installments count (1 = pago al contado). */
+    installments: number;
+    /** Payer email captured by the Brick. */
+    payerEmail: string;
+    /** Identification type (DNI, CE, RUC). Optional but recommended. */
+    payerIdType?: string;
+    /** Identification number. Optional but recommended. */
+    payerIdNumber?: string;
+}
+
+export interface MercadoPagoProcessResponse {
+    paid: boolean;
+    order_number: string;
+    payment_id: string;
+    /** MP payment status — 'approved' | 'in_process' | 'pending' | other. */
+    status: string;
+}
+
+/**
+ * POST /api/payments/mercadopago/process/ → creates an MP payment for an
+ * order using the Brick-produced card token. The MP API call is synchronous
+ * and authoritative when status='approved'; status='in_process' means the
+ * final outcome arrives later via the /pay webhook.
+ *
+ * On success the backend has already marked the order paid and cleared the
+ * cart, so we invalidate both caches.
+ */
+export const useMercadoPagoProcess = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            orderNumber,
+            token,
+            paymentMethodId,
+            issuerId,
+            installments,
+            payerEmail,
+            payerIdType,
+            payerIdNumber,
+        }: MercadoPagoProcessPayload): Promise<MercadoPagoProcessResponse> => {
+            const { data } = await api.post<MercadoPagoProcessResponse>(
+                API_ROUTES.mercadopagoProcess,
+                {
+                    order_number: orderNumber,
+                    token,
+                    payment_method_id: paymentMethodId,
+                    issuer_id: issuerId,
+                    installments,
+                    payer: {
+                        email: payerEmail,
+                        identification:
+                            payerIdType && payerIdNumber
+                                ? { type: payerIdType, number: payerIdNumber }
+                                : undefined,
+                    },
+                },
+            );
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ORDER_KEYS.all });
+            queryClient.invalidateQueries({ queryKey: CART_KEYS.all });
+        },
+    });
+};
+
+// ─── Culqi (dormant gateway — kept for fallback) ────────────────────────────
+
+export interface CulqiOrderResponse {
+    culqi_order_id: string;
+    public_key: string;
+    /** Amount in céntimos (S/ 1.00 = 100). */
+    amount: number;
+    currency: string;
+    email: string;
+    order_number: string;
+}
+
+export interface CulqiChargeResponse {
+    paid: boolean;
+    order_number: string;
+    charge_id: string;
+}
+
+/**
+ * POST /api/payments/culqi/order/ → creates (or reuses) a Culqi Order for the
+ * given Django order. The Culqi Order is what enables every payment method
+ * (card, Yape, PagoEfectivo, wallets, banca móvil, agentes, Cuotéalo).
+ *
+ * No toast on success: the Culqi Order is an internal step; the user-visible
+ * signal is the payment form rendering, not a notification.
+ */
+export const useCulqiOrder = () => {
+    return useMutation({
+        mutationFn: async ({
+            orderNumber,
+        }: {
+            orderNumber: string;
+        }): Promise<CulqiOrderResponse> => {
+            const { data } = await api.post<CulqiOrderResponse>(API_ROUTES.culqiOrder, {
+                order_number: orderNumber,
+            });
+            return data;
+        },
+    });
+};
+
+/**
+ * POST /api/payments/culqi/charge/ → charges a Culqi card/Yape token for an
+ * order. The charge is synchronous and authoritative. On success, invalidates
+ * orders and cart — the backend has marked the order paid and cleared the cart.
+ */
+export const useCulqiCharge = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({
+            orderNumber,
+            tokenId,
+        }: {
+            orderNumber: string;
+            tokenId: string;
+        }): Promise<CulqiChargeResponse> => {
+            const { data } = await api.post<CulqiChargeResponse>(API_ROUTES.culqiCharge, {
+                order_number: orderNumber,
+                token_id: tokenId,
+            });
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ORDER_KEYS.all });
+            queryClient.invalidateQueries({ queryKey: CART_KEYS.all });
+        },
+    });
+};
+
+// ─── Izipay (dormant gateway — kept for fallback) ────────────────────────────
 
 export interface IzipayTokenResponse {
     formToken: string;

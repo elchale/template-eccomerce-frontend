@@ -1,0 +1,1 @@
+export { MercadoPagoForm } from './MercadoPagoForm';
