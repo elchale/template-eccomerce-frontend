@@ -1,0 +1,106 @@
+.wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* ── Loading state ─────────────────────────────────────────────────────────── */
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-2xl) var(--spacing-md);
+}
+
+.loadingText {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* ── Ready content ─────────────────────────────────────────────────────────── */
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: center;
+    width: 100%;
+    padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.amount {
+    margin: 0;
+    font-size: var(--text-md);
+    color: var(--color-text);
+}
+
+.methods {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.securityNote {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.lockIcon {
+    flex-shrink: 0;
+    color: var(--color-success);
+}
+
+/* ── Processing overlay ────────────────────────────────────────────────────── */
+
+.processingOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-overlay);
+    backdrop-filter: blur(4px);
+    border-radius: var(--radius-xl);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.processingCard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+.processingTitle {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.processingText {
+    max-width: 280px;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

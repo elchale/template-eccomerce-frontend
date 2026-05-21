@@ -114,7 +114,14 @@ export const API_ROUTES = {
     orders: '/api/orders/',
     orderDetail: (orderNumber: string) => `/api/orders/${orderNumber}/`,
 
-    // Payments — Izipay
+    // Payments — Mercado Pago (active gateway)
+    mercadopagoProcess: '/api/payments/mercadopago/process/',
+
+    // Payments — Culqi (dormant, kept for fallback)
+    culqiCharge: '/api/payments/culqi/charge/',
+    culqiOrder: '/api/payments/culqi/order/',
+
+    // Payments — Izipay (dormant, kept for fallback)
     izipayCreateToken: '/api/payments/izipay/create-token/',
     izipayVerify: '/api/payments/izipay/verify/',
 

@@ -73,8 +73,19 @@ export {
 } from './useAdmin';
 
 export { useThemeSettings, THEME_KEYS } from './useThemeSettings';
-export { useIzipayToken, useVerifyPayment, PAYMENT_KEYS } from './usePayments';
+export {
+    useMercadoPagoProcess,
+    useCulqiOrder,
+    useCulqiCharge,
+    useIzipayToken,
+    useVerifyPayment,
+    PAYMENT_KEYS,
+} from './usePayments';
 export type {
+    MercadoPagoProcessPayload,
+    MercadoPagoProcessResponse,
+    CulqiOrderResponse,
+    CulqiChargeResponse,
     VerifyPaymentPayload,
     VerifyPaymentResponse,
     IzipayTokenResponse,

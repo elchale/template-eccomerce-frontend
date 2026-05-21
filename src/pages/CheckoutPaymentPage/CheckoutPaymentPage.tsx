@@ -7,15 +7,33 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 
 import { CART_KEYS } from '@/api/useCart';
 import { useOrderDetail, ORDER_KEYS } from '@/api/useOrders';
-import { useIzipayToken, useVerifyPayment } from '@/api/usePayments';
-import { IzipayForm } from '@/components/payments/IzipayForm';
-import type { IzipayPaymentResult } from '@/components/payments/IzipayForm';
+import {
+    useIzipayToken,
+    useVerifyPayment,
+    useCulqiOrder,
+    useCulqiCharge,
+    useMercadoPagoProcess,
+} from '@/api/usePayments';
+import type { CulqiOrderResponse } from '@/api/usePayments';
+import { CulqiForm, IzipayForm, MercadoPagoForm } from '@/components/payments';
+import type { IzipayPaymentResult } from '@/components/payments';
 import { Button, Spinner, Skeleton } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
 import type { PaymentStep } from '@/types/payment';
 
 import styles from './CheckoutPaymentPage.module.css';
+
+// ─── Gateway selection ──────────────────────────────────────────────────────
+
+// Active payment gateway. Mercado Pago is the default; Culqi and Izipay are
+// kept dormant and only used when VITE_PAYMENT_GATEWAY is flipped.
+const GATEWAY = (import.meta.env.VITE_PAYMENT_GATEWAY as string | undefined) ?? 'mercadopago';
+const IS_MERCADOPAGO = GATEWAY === 'mercadopago';
+const IS_CULQI = GATEWAY === 'culqi';
+const IS_IZIPAY = GATEWAY === 'izipay';
+const GATEWAY_NAME = IS_MERCADOPAGO ? 'Mercado Pago' : IS_CULQI ? 'Culqi' : 'Izipay';
+const MP_PUBLIC_KEY = (import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string | undefined) ?? '';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -24,7 +42,11 @@ import styles from './CheckoutPaymentPage.module.css';
  * Route: /checkout/pay/:orderNumber (protected — auth required)
  *
  * State machine: loading → ready → processing → navigate to order
- *                loading → error (retry refetches token)
+ *                loading → error (retry re-prepares the gateway)
+ *
+ * Gateway-aware: with Culqi (active) it prepares a Culqi Order and renders the
+ * CulqiForm; with Izipay (dormant) it fetches a formToken and renders the
+ * IzipayForm. The gateway is fixed at build time via VITE_PAYMENT_GATEWAY.
  *
  * ADR §7.3 / §8.
  */
@@ -35,14 +57,22 @@ export function CheckoutPaymentPage() {
     const { t } = useTranslation('shop');
 
     const { data: order, isLoading: orderLoading } = useOrderDetail(orderNumber);
+
+    // Izipay (dormant gateway) mutations.
     const createToken = useIzipayToken();
     const verifyPayment = useVerifyPayment();
+    // Culqi (dormant gateway) mutations.
+    const culqiOrderMutation = useCulqiOrder();
+    const culqiCharge = useCulqiCharge();
+    // Mercado Pago (active gateway) mutation.
+    const mpProcess = useMercadoPagoProcess();
 
     const [formToken, setFormToken] = useState<string | null>(null);
+    const [culqiOrder, setCulqiOrder] = useState<CulqiOrderResponse | null>(null);
     const [step, setStep] = useState<PaymentStep>('loading');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    // Timeout ref — switches loading → error after 30s if token never arrives
+    // Timeout ref — switches loading → error after 30s if preparation stalls.
     const tokenTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const clearTokenTimeout = useCallback(() => {
@@ -52,11 +82,21 @@ export function CheckoutPaymentPage() {
         }
     }, []);
 
-    /** Fetch a fresh form token from the backend. */
-    const fetchToken = useCallback(() => {
+    /** Prepare the gateway: nothing to fetch for MP (the Brick takes over), a
+     *  Culqi Order for Culqi, a formToken for Izipay. */
+    const prepare = useCallback(() => {
         if (!orderNumber) return;
         setStep('loading');
         setErrorMessage(null);
+
+        // Mercado Pago needs no server round-trip before rendering the Brick —
+        // the Brick fetches its own settings from MP directly using the public
+        // key. Skip straight to the 'ready' step.
+        if (IS_MERCADOPAGO) {
+            clearTokenTimeout();
+            setStep('ready');
+            return;
+        }
 
         // 30s timeout guard (ADR §8.2 — slow network fallback)
         clearTokenTimeout();
@@ -66,27 +106,52 @@ export function CheckoutPaymentPage() {
             toast.error(t('payment_token_failed'), { duration: 8000 });
         }, 30_000);
 
-        createToken.mutate(
-            { orderNumber },
-            {
-                onSuccess: (data) => {
-                    clearTokenTimeout();
-                    setFormToken(data.formToken);
-                    setStep('ready');
+        if (IS_CULQI) {
+            culqiOrderMutation.mutate(
+                { orderNumber },
+                {
+                    onSuccess: (data) => {
+                        clearTokenTimeout();
+                        setCulqiOrder(data);
+                        setStep('ready');
+                    },
+                    onError: (err) => {
+                        clearTokenTimeout();
+                        const axiosErr = err as { response?: { status?: number } };
+                        const msg =
+                            axiosErr?.response?.status === 502
+                                ? t('payment_provider_down')
+                                : t('payment_token_failed');
+                        setErrorMessage(msg);
+                        setStep('error');
+                        toast.error(msg, { duration: 8000 });
+                    },
                 },
-                onError: (err) => {
-                    clearTokenTimeout();
-                    const axiosErr = err as { response?: { status?: number } };
-                    const status = axiosErr?.response?.status;
-                    const msg =
-                        status === 502 ? t('payment_provider_down') : t('payment_token_failed');
-                    setErrorMessage(msg);
-                    setStep('error');
-                    toast.error(msg, { duration: 8000 });
+            );
+        } else {
+            createToken.mutate(
+                { orderNumber },
+                {
+                    onSuccess: (data) => {
+                        clearTokenTimeout();
+                        setFormToken(data.formToken);
+                        setStep('ready');
+                    },
+                    onError: (err) => {
+                        clearTokenTimeout();
+                        const axiosErr = err as { response?: { status?: number } };
+                        const msg =
+                            axiosErr?.response?.status === 502
+                                ? t('payment_provider_down')
+                                : t('payment_token_failed');
+                        setErrorMessage(msg);
+                        setStep('error');
+                        toast.error(msg, { duration: 8000 });
+                    },
                 },
-            },
-        );
-    }, [orderNumber, createToken, clearTokenTimeout, t]);
+            );
+        }
+    }, [orderNumber, createToken, culqiOrderMutation, clearTokenTimeout, t]);
 
     // On order load: guard against already-paid or non-pending orders
     useEffect(() => {
@@ -103,12 +168,156 @@ export function CheckoutPaymentPage() {
             return;
         }
 
-        fetchToken();
+        prepare();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [order?.order_number, order?.status, order?.payment_status]);
 
     // Cleanup timeout on unmount
     useEffect(() => () => clearTokenTimeout(), [clearTokenTimeout]);
+
+    // ── Mercado Pago handler (active gateway) ─────────────────────────────────
+
+    /**
+     * Brick produced a tokenised card — forward the payload to the backend,
+     * which creates the MP payment synchronously. status='approved' is
+     * authoritative; status='in_process' means the webhook will confirm
+     * shortly. The Promise we return tells the Brick whether to re-enable
+     * its submit button.
+     */
+    const handleMercadoPagoSubmit = useCallback(
+        async (cardFormData: MercadoPagoCardFormData) => {
+            setStep('processing');
+            try {
+                const result = await mpProcess.mutateAsync({
+                    orderNumber,
+                    token: cardFormData.token,
+                    paymentMethodId: cardFormData.payment_method_id,
+                    issuerId: cardFormData.issuer_id,
+                    installments: cardFormData.installments,
+                    payerEmail: cardFormData.payer.email,
+                    payerIdType: cardFormData.payer.identification?.type,
+                    payerIdNumber: cardFormData.payer.identification?.number,
+                });
+
+                if (result.paid) {
+                    // Optimistic: clear cart in cache immediately.
+                    qc.setQueryData(CART_KEYS.detail(), {
+                        items: [],
+                        item_count: 0,
+                        subtotal: '0.00',
+                        id: 0,
+                    });
+                    qc.invalidateQueries({ queryKey: CART_KEYS.all });
+                    qc.invalidateQueries({ queryKey: ORDER_KEYS.all });
+
+                    toast.success(t('payment_success'), { duration: 3000 });
+                    navigate(ROUTES.orderDetail.replace(':orderNumber', orderNumber));
+                } else if (
+                    result.status === 'in_process' ||
+                    result.status === 'pending'
+                ) {
+                    // MP is reviewing — the /pay webhook will confirm later.
+                    qc.invalidateQueries({ queryKey: CART_KEYS.all });
+                    qc.invalidateQueries({ queryKey: ORDER_KEYS.all });
+                    toast(t('payment_verifying'), { duration: 5000 });
+                    navigate(
+                        `${ROUTES.orderDetail.replace(':orderNumber', orderNumber)}?verifying=1`,
+                    );
+                } else {
+                    setErrorMessage(t('payment_error_generic'));
+                    setStep('error');
+                    toast.error(t('payment_error_generic'), { duration: 8000 });
+                    throw new Error(t('payment_error_generic'));
+                }
+            } catch (error) {
+                const axiosErr = error as {
+                    response?: { data?: { detail?: string } };
+                };
+                const msg =
+                    axiosErr?.response?.data?.detail ?? t('payment_error_generic');
+                setErrorMessage(msg);
+                setStep('error');
+                toast.error(msg, { duration: 8000 });
+                throw error;
+            }
+        },
+        [mpProcess, navigate, orderNumber, t, qc],
+    );
+
+    const handleMercadoPagoError = useCallback((message: string) => {
+        setErrorMessage(message);
+        setStep('error');
+        toast.error(message, { duration: 8000 });
+    }, []);
+
+    // ── Culqi handlers (dormant gateway) ──────────────────────────────────────
+
+    /** Card / Yape token created — charge it synchronously on the backend. */
+    const handleCulqiToken = useCallback(
+        (tokenId: string) => {
+            setStep('processing');
+            culqiCharge.mutate(
+                { orderNumber, tokenId },
+                {
+                    onSuccess: (data) => {
+                        if (data.paid) {
+                            // Optimistic: clear cart in cache immediately.
+                            qc.setQueryData(CART_KEYS.detail(), {
+                                items: [],
+                                item_count: 0,
+                                subtotal: '0.00',
+                                id: 0,
+                            });
+                            qc.invalidateQueries({ queryKey: CART_KEYS.all });
+                            qc.invalidateQueries({ queryKey: ORDER_KEYS.all });
+
+                            toast.success(t('payment_success'), { duration: 3000 });
+                            navigate(ROUTES.orderDetail.replace(':orderNumber', orderNumber));
+                        } else {
+                            setErrorMessage(t('payment_error_generic'));
+                            setStep('error');
+                            toast.error(t('payment_error_generic'), { duration: 8000 });
+                        }
+                    },
+                    onError: (err) => {
+                        const axiosErr = err as {
+                            response?: { data?: { detail?: string } };
+                        };
+                        const msg =
+                            axiosErr?.response?.data?.detail || t('payment_error_generic');
+                        setErrorMessage(msg);
+                        setStep('error');
+                        toast.error(msg, { duration: 8000 });
+                    },
+                },
+            );
+        },
+        [culqiCharge, navigate, orderNumber, t, qc],
+    );
+
+    /**
+     * An asynchronous method (PagoEfectivo, wallet, etc.) was chosen — the
+     * payment confirms later via webhook, so acknowledge and move on.
+     */
+    const handleCulqiOrderPending = useCallback(() => {
+        qc.invalidateQueries({ queryKey: CART_KEYS.all });
+        qc.invalidateQueries({ queryKey: ORDER_KEYS.all });
+        toast(t('payment_culqi_pending'), { duration: 6000 });
+        navigate(ROUTES.orderDetail.replace(':orderNumber', orderNumber));
+    }, [navigate, orderNumber, t, qc]);
+
+    const handleCulqiError = useCallback(
+        (message: string) => {
+            setErrorMessage(message);
+            setStep('error');
+            toast.error(message, { duration: 8000 });
+        },
+        [],
+    );
+
+    // (Culqi handlers remain below for the dormant gateway path.)
+
+    // ── Izipay handlers (dormant gateway) ─────────────────────────────────────
 
     /** Called by IzipayForm on successful card submit. */
     const handlePaymentSuccess = useCallback(
@@ -184,6 +393,11 @@ export function CheckoutPaymentPage() {
     // ── Render helpers ────────────────────────────────────────────────────────
 
     const formatSoles = (amount: string | number) => formatCurrency(amount);
+    const retryPending = IS_MERCADOPAGO
+        ? mpProcess.isPending
+        : IS_CULQI
+          ? culqiOrderMutation.isPending
+          : createToken.isPending;
 
     // ── Loading skeleton (order still fetching) ───────────────────────────────
     if (orderLoading) {
@@ -247,7 +461,9 @@ export function CheckoutPaymentPage() {
                 {t('payment_title')}
                 <span className={styles.orderNumber}>{order.order_number}</span>
             </h1>
-            <p className={styles.pageSubtitle}>{t('payment_subtitle')}</p>
+            <p className={styles.pageSubtitle}>
+                {t('payment_subtitle_gateway', { gateway: GATEWAY_NAME })}
+            </p>
 
             <div className={styles.layout}>
                 {/* ── Left: payment form ─────────────────────────────────── */}
@@ -258,7 +474,7 @@ export function CheckoutPaymentPage() {
                             {t('payment_title')}
                         </h2>
 
-                        {/* State: loading token */}
+                        {/* State: preparing the gateway */}
                         {step === 'loading' && (
                             <div className={styles.stateBox} aria-live="polite" aria-busy="true">
                                 <Skeleton variant="rectangular" height={40} />
@@ -273,7 +489,7 @@ export function CheckoutPaymentPage() {
                             </div>
                         )}
 
-                        {/* State: processing verify */}
+                        {/* State: processing verify / charge */}
                         {step === 'processing' && (
                             <div className={styles.stateBox} aria-live="polite" aria-busy="true">
                                 <div className={styles.spinnerRow}>
@@ -293,8 +509,8 @@ export function CheckoutPaymentPage() {
                                 </p>
                                 <Button
                                     variant="secondary"
-                                    onClick={fetchToken}
-                                    disabled={createToken.isPending}
+                                    onClick={prepare}
+                                    disabled={retryPending}
                                 >
                                     <ArrowsClockwise size={16} aria-hidden="true" />
                                     {t('payment_retry')}
@@ -302,19 +518,44 @@ export function CheckoutPaymentPage() {
                             </div>
                         )}
 
-                        {/* State: ready — render Krypton form */}
-                        {step === 'ready' && !!formToken && (
+                        {/* State: ready — Mercado Pago (active gateway) */}
+                        {step === 'ready' && IS_MERCADOPAGO ? (
+                            <MercadoPagoForm
+                                publicKey={MP_PUBLIC_KEY}
+                                amount={total}
+                                email={order.email ?? ''}
+                                onPaymentReady={handleMercadoPagoSubmit}
+                                onError={handleMercadoPagoError}
+                            />
+                        ) : null}
+
+                        {/* State: ready — Culqi (dormant gateway) */}
+                        {step === 'ready' && IS_CULQI && !!culqiOrder ? (
+                            <CulqiForm
+                                culqiOrderId={culqiOrder.culqi_order_id}
+                                publicKey={culqiOrder.public_key}
+                                amount={culqiOrder.amount}
+                                currency={culqiOrder.currency}
+                                email={culqiOrder.email}
+                                onToken={handleCulqiToken}
+                                onOrderPending={handleCulqiOrderPending}
+                                onError={handleCulqiError}
+                            />
+                        ) : null}
+
+                        {/* State: ready — Izipay (dormant gateway) */}
+                        {step === 'ready' && IS_IZIPAY && !!formToken ? (
                             <IzipayForm
                                 formToken={formToken}
                                 onSuccess={handlePaymentSuccess}
                                 onError={handlePaymentError}
                             />
-                        )}
+                        ) : null}
                     </div>
 
                     <p className={styles.secureRow}>
                         <LockKey size={14} weight="bold" aria-hidden="true" />
-                        {t('payment_secure_note')}
+                        {t('payment_secure_note_gateway', { gateway: GATEWAY_NAME })}
                     </p>
                 </section>
 
