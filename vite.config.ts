@@ -31,12 +31,12 @@ const PROXIED_PATHS = ['/api', '/auth', '/media', '/static', '/ws'];
 // *.online-metrix.net) are kept for the dormant gateway paths.
 const DEV_CSP = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://maps.gstatic.com https://js.culqi.com https://*.culqi.com https://sdk.mercadopago.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://maps.gstatic.com https://js.culqi.com https://*.culqi.com https://sdk.mercadopago.com https://*.mlstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.micuentaweb.pe https://js.culqi.com https://*.culqi.com https://sdk.mercadopago.com",
     "img-src 'self' data: blob: https: http://127.0.0.1:* http://localhost:* https://*.mlstatic.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "connect-src 'self' ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:* https: https://accounts.google.com https://oauth2.googleapis.com https://static.micuentaweb.pe https://api.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://*.culqi.com https://api.mercadopago.com https://sdk.mercadopago.com https://*.mercadopago.com",
-    'frame-src https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://*.culqi.com https://*.mercadopago.com',
+    "connect-src 'self' ws://127.0.0.1:* ws://localhost:* http://127.0.0.1:* http://localhost:* https: https://accounts.google.com https://oauth2.googleapis.com https://static.micuentaweb.pe https://api.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://*.culqi.com https://api.mercadopago.com https://sdk.mercadopago.com https://*.mercadopago.com https://api.mercadolibre.com https://*.mercadolibre.com https://*.mlstatic.com",
+    'frame-src https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://*.culqi.com https://*.mercadopago.com https://*.mercadolibre.com',
     "base-uri 'self'",
     "form-action 'self'",
 ].join('; ');
