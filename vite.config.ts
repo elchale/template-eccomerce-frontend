@@ -31,7 +31,7 @@ const PROXIED_PATHS = ['/api', '/auth', '/media', '/static', '/ws'];
 // *.online-metrix.net) are kept for the dormant gateway paths.
 const DEV_CSP = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://maps.gstatic.com https://js.culqi.com https://*.culqi.com https://sdk.mercadopago.com https://*.mlstatic.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://static.micuentaweb.pe https://secure.micuentaweb.pe https://*.online-metrix.net https://maps.googleapis.com https://maps.gstatic.com https://js.culqi.com https://*.culqi.com https://www.mercadopago.com https://sdk.mercadopago.com https://*.mlstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://static.micuentaweb.pe https://js.culqi.com https://*.culqi.com https://sdk.mercadopago.com",
     "img-src 'self' data: blob: https: http://127.0.0.1:* http://localhost:* https://*.mlstatic.com",
     "font-src 'self' data: https://fonts.gstatic.com",

@@ -43,3 +43,15 @@ export function loadMercadoPagoSdk(): Promise<void> {
 
     return scriptPromise;
 }
+
+/**
+ * Read the MP Device ID set by the security.js script loaded in index.html.
+ *
+ * security.js auto-populates `window.MP_DEVICE_SESSION_ID`. We forward this
+ * to the backend (as `device_id`), which passes it to MP as the
+ * `X-meli-session-id` header — a fraud-prevention fingerprint that materially
+ * cuts `high_risk` rejections. Returns '' when the script has not yet run.
+ */
+export function getDeviceId(): string {
+    return (window as unknown as { MP_DEVICE_SESSION_ID?: string }).MP_DEVICE_SESSION_ID ?? '';
+}

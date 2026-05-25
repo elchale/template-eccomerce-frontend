@@ -28,6 +28,8 @@ export interface MercadoPagoProcessPayload {
     payerIdType?: string | undefined;
     /** Identification number. Optional but recommended. */
     payerIdNumber?: string | undefined;
+    /** MP Device ID (window.MP_DEVICE_SESSION_ID) — improves approval rates. */
+    deviceId?: string | undefined;
 }
 
 export interface MercadoPagoProcessResponse {
@@ -59,6 +61,7 @@ export const useMercadoPagoProcess = () => {
             payerEmail,
             payerIdType,
             payerIdNumber,
+            deviceId,
         }: MercadoPagoProcessPayload): Promise<MercadoPagoProcessResponse> => {
             const { data } = await api.post<MercadoPagoProcessResponse>(
                 API_ROUTES.mercadopagoProcess,
@@ -68,6 +71,7 @@ export const useMercadoPagoProcess = () => {
                     payment_method_id: paymentMethodId,
                     issuer_id: issuerId,
                     installments,
+                    device_id: deviceId,
                     payer: {
                         email: payerEmail,
                         identification:

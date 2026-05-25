@@ -18,7 +18,11 @@ vi.mock('@/lib/axios', () => ({
     },
 }));
 
-import { useIzipayToken, useVerifyPayment } from '@/api/usePayments';
+import {
+    useIzipayToken,
+    useVerifyPayment,
+    useMercadoPagoProcess,
+} from '@/api/usePayments';
 import { api } from '@/lib/axios';
 
 // ── Helper: wrap hooks in a fresh QueryClient ─────────────────────────────
@@ -76,6 +80,87 @@ describe('useIzipayToken', () => {
 
         await waitFor(() => expect(result.current.isError).toBe(true));
         expect(result.current.error).toBeInstanceOf(Error);
+    });
+});
+
+describe('useMercadoPagoProcess', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('POSTs to mercadopagoProcess with device_id and payer payload', async () => {
+        const mockPost = vi.mocked(api.post);
+        mockPost.mockResolvedValueOnce({
+            data: {
+                paid: true,
+                order_number: 'QLCA-20260501-ABCD',
+                payment_id: '999',
+                status: 'approved',
+            },
+        });
+
+        const { Wrapper } = createWrapper();
+        const { result } = renderHook(() => useMercadoPagoProcess(), { wrapper: Wrapper });
+
+        act(() => {
+            result.current.mutate({
+                orderNumber: 'QLCA-20260501-ABCD',
+                token: 'mp_token_abc',
+                paymentMethodId: 'visa',
+                issuerId: '310',
+                installments: 1,
+                payerEmail: 'test@test.com',
+                payerIdType: 'DNI',
+                payerIdNumber: '12345678',
+                deviceId: 'dev-session-xyz',
+            });
+        });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+        expect(mockPost).toHaveBeenCalledWith('/api/payments/mercadopago/process/', {
+            order_number: 'QLCA-20260501-ABCD',
+            token: 'mp_token_abc',
+            payment_method_id: 'visa',
+            issuer_id: '310',
+            installments: 1,
+            device_id: 'dev-session-xyz',
+            payer: {
+                email: 'test@test.com',
+                identification: { type: 'DNI', number: '12345678' },
+            },
+        });
+        expect(result.current.data?.paid).toBe(true);
+    });
+
+    it('surfaces the safe {detail, code} error body on a 402 rejection', async () => {
+        const mockPost = vi.mocked(api.post);
+        mockPost.mockRejectedValueOnce({
+            response: {
+                status: 402,
+                data: { detail: 'Tu tarjeta no tiene saldo suficiente. Intenta con otra.', code: 'insufficient_funds' },
+            },
+        });
+
+        const { Wrapper } = createWrapper();
+        const { result } = renderHook(() => useMercadoPagoProcess(), { wrapper: Wrapper });
+
+        act(() => {
+            result.current.mutate({
+                orderNumber: 'QLCA-20260501-FAIL',
+                token: 'mp_token_bad',
+                paymentMethodId: 'visa',
+                installments: 1,
+                payerEmail: 'test@test.com',
+            });
+        });
+
+        await waitFor(() => expect(result.current.isError).toBe(true));
+        const err = result.current.error as {
+            response?: { data?: { detail?: string; code?: string } };
+        };
+        expect(err.response?.data?.detail).toContain('saldo suficiente');
+        expect(err.response?.data?.code).toBe('insufficient_funds');
     });
 });
 

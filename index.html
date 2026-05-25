@@ -12,6 +12,12 @@
         />
         <script src="https://static.micuentaweb.pe/static/js/krypton-client/V4.0/ext/neon.js"></script>
 
+        <!-- Mercado Pago device-fingerprint script (active gateway). Loaded
+             here so window.MP_DEVICE_SESSION_ID is set before checkout. The
+             beacons it fires go to *.online-metrix.net (already allowlisted in
+             connect-src). Host www.mercadopago.com is in script-src below. -->
+        <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
+
         <!--
             Security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS,
             Referrer-Policy, Permissions-Policy) are delivered as HTTP headers, not

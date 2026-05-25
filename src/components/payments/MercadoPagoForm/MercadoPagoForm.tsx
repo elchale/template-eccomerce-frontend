@@ -69,24 +69,20 @@ export function MercadoPagoForm({
               ? 'en-US'
               : 'es-PE';
 
-        const handleSubmit = async (cardFormData: MercadoPagoCardFormData) => {
-            try {
-                await onPaymentReadyRef.current(cardFormData);
-            } catch (error) {
-                // Surface the same message used by the parent and
-                // re-throw so the Brick re-enables its submit button.
-                const message =
-                    (error as Error)?.message ?? t('payment_error_generic');
-                onErrorRef.current(message);
-                throw error;
-            }
+        const handleSubmit = (cardFormData: MercadoPagoCardFormData): Promise<void> => {
+            // The parent shows the backend-safe message and re-throws; we let
+            // the rejection propagate so the Brick re-enables its submit
+            // button. We do NOT surface the raw error here (would double-toast
+            // / leak codes).
+            return onPaymentReadyRef.current(cardFormData);
         };
 
-        const handleBrickError = (error: unknown) => {
-            logger.error('Mercado Pago Brick error', error);
-            const message =
-                (error as { message?: string })?.message ?? t('payment_error_generic');
-            onErrorRef.current(message);
+        const handleBrickError = () => {
+            // Map any Brick-side error to a friendly generic message — never
+            // pass MP's raw error.message to the UI, and do not dump the raw
+            // error object to the console.
+            logger.error('Mercado Pago Brick error');
+            onErrorRef.current(t('payment_error_contact'));
         };
 
         loadMercadoPagoSdk()
@@ -132,8 +128,8 @@ export function MercadoPagoForm({
                 }
                 controllerRef.current = controller;
             })
-            .catch((error: unknown) => {
-                logger.error('Mercado Pago Brick init failed', error);
+            .catch(() => {
+                logger.error('Mercado Pago Brick init failed');
                 if (mounted.current) {
                     onErrorRef.current(t('payment_mercadopago_load_failed'));
                 }

@@ -185,6 +185,7 @@
   "payment_success": "Payment successful! Thank you for your purchase.",
   "payment_verifying": "We're verifying your payment. We'll email you when it's confirmed.",
   "payment_error_generic": "Something went wrong with the payment.",
+  "payment_error_contact": "We couldn't process your payment. Try again or email us at info@qolca.org.",
   "payment_retry": "Retry",
   "payment_order_summary": "Order summary",
   "payment_total": "Total",

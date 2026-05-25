@@ -20,6 +20,7 @@ import type { IzipayPaymentResult } from '@/components/payments';
 import { Button, Spinner, Skeleton } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { getDeviceId } from '@/lib/mercadopago';
 import type { PaymentStep } from '@/types/payment';
 
 import styles from './CheckoutPaymentPage.module.css';
@@ -197,6 +198,7 @@ export function CheckoutPaymentPage() {
                     payerEmail: cardFormData.payer.email,
                     payerIdType: cardFormData.payer.identification?.type,
                     payerIdNumber: cardFormData.payer.identification?.number,
+                    deviceId: getDeviceId(),
                 });
 
                 if (result.paid) {
@@ -224,17 +226,20 @@ export function CheckoutPaymentPage() {
                         `${ROUTES.orderDetail.replace(':orderNumber', orderNumber)}?verifying=1`,
                     );
                 } else {
-                    setErrorMessage(t('payment_error_generic'));
+                    setErrorMessage(t('payment_error_contact'));
                     setStep('error');
-                    toast.error(t('payment_error_generic'), { duration: 8000 });
-                    throw new Error(t('payment_error_generic'));
+                    toast.error(t('payment_error_contact'), { duration: 8000 });
+                    throw new Error(t('payment_error_contact'));
                 }
             } catch (error) {
+                // Render ONLY the backend-supplied safe `detail`. When there
+                // is none (network error, etc.) fall back to a generic message
+                // that includes our contact email. Never surface raw MP codes.
                 const axiosErr = error as {
                     response?: { data?: { detail?: string } };
                 };
                 const msg =
-                    axiosErr?.response?.data?.detail ?? t('payment_error_generic');
+                    axiosErr?.response?.data?.detail ?? t('payment_error_contact');
                 setErrorMessage(msg);
                 setStep('error');
                 toast.error(msg, { duration: 8000 });

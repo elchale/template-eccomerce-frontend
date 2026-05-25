@@ -87,4 +87,6 @@ interface MercadoPagoConstructor {
 
 interface Window {
     MercadoPago?: MercadoPagoConstructor;
+    /** MP Device ID set by https://www.mercadopago.com/v2/security.js. */
+    MP_DEVICE_SESSION_ID?: string;
 }
