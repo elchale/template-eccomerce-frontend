@@ -29,6 +29,8 @@
 
 .input {
     width: 100%;
+    /* Comfortable tap target (>=44px tall) for mobile checkout. */
+    min-height: 44px;
     padding: var(--spacing-sm) var(--spacing-md);
     font-family: inherit;
     font-size: var(--text-md);
@@ -71,6 +73,29 @@
 .errorText {
     font-size: var(--text-sm);
     color: var(--color-error);
+}
+
+/* Short instruction shown above the confirmation map. */
+.mapHint {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Visual confirmation map with the draggable pin. */
+.map {
+    width: 100%;
+    height: 280px;
+    border: var(--border-width-sm) solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg-subtle);
+}
+
+/* Keeps the map block out of the layout (and out of the a11y tree) until
+ * the Maps SDK is ready — the graceful no-API-key degrade. */
+.hidden {
+    display: none;
 }
 
 @media (width <= 600px) {
