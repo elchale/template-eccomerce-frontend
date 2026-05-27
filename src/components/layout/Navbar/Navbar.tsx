@@ -3,7 +3,7 @@ import {
     House,
     List,
     MagnifyingGlass,
-    ShoppingBag,
+    Package,
     ShoppingCart,
     SquaresFour,
     User,
@@ -217,7 +217,7 @@ export function Navbar() {
                             className={`${styles.mobileLink} ${isActive(ROUTES.orders) ? styles.mobileLinkActive : ''}`}
                             onClick={() => setMobileMenuOpen(false)}
                         >
-                            <ShoppingBag size={20} />
+                            <Package size={20} />
                             <span>{t('nav_orders')}</span>
                         </Link>
                         {!!isAdmin && (
@@ -331,7 +331,7 @@ export function Navbar() {
                                         : t('nav_orders_aria')
                                 }
                             >
-                                <ShoppingBag size={20} />
+                                <Package size={20} />
                                 {pendingOrdersCount > 0 && (
                                     <span className={styles.cartBadge}>
                                         {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}

@@ -53,6 +53,12 @@
     cursor: not-allowed;
 }
 
+.requiredMark {
+    color: var(--color-error);
+    font-weight: 600;
+    line-height: 1;
+}
+
 .assistTag {
     padding: 2px var(--spacing-xs);
     font-size: var(--text-xs);

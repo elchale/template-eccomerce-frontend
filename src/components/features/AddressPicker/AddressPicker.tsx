@@ -210,12 +210,21 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     const renderError = (key: keyof AddressFields) =>
         errors?.[key] ? <span className={styles.errorText}>{errors[key]}</span> : null;
 
+    // Small reusable required marker. `aria-hidden` because the visual `*`
+    // is decorative; required state is also conveyed by the field itself.
+    const requiredMark = (
+        <span className={styles.requiredMark} aria-hidden="true">
+            *
+        </span>
+    );
+
     return (
         <div className={styles.grid}>
             {/* Country */}
             <div className={`${styles.field} ${styles.full}`}>
                 <label className={styles.label} htmlFor="addr-country">
                     {t('address_country')}
+                    {requiredMark}
                 </label>
                 <select
                     id="addr-country"
@@ -236,6 +245,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             <div className={styles.field}>
                 <label className={styles.label} htmlFor="addr-recipient">
                     {t('address_recipient')}
+                    {requiredMark}
                 </label>
                 <input
                     id="addr-recipient"
@@ -270,6 +280,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             <div className={`${styles.field} ${styles.full}`}>
                 <label className={styles.label} htmlFor="addr-line1">
                     {t('address_line1')}
+                    {requiredMark}
                     {autocompleteReady && (
                         <span className={styles.assistTag}>{t('address_autocomplete_hint')}</span>
                     )}
@@ -308,6 +319,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             <div className={styles.field}>
                 <label className={styles.label} htmlFor="addr-departamento">
                     {isPeru ? t('address_departamento') : t('address_state')}
+                    {isPeru ? requiredMark : null}
                 </label>
                 {isPeru ? (
                     <select
@@ -347,6 +359,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     type="text"
                     value={value.provincia}
                     onChange={(e) => setField('provincia', e.target.value)}
+                    placeholder={t('address_provincia_placeholder')}
                     autoComplete="address-level2"
                 />
                 {renderError('provincia')}
@@ -363,6 +376,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     type="text"
                     value={value.distrito}
                     onChange={(e) => setField('distrito', e.target.value)}
+                    placeholder={t('address_distrito_placeholder')}
                     autoComplete="address-level3"
                 />
                 {renderError('distrito')}

@@ -2,8 +2,8 @@ import {
     ArrowRight,
     Heart,
     LockKey,
+    Package,
     ShieldCheck,
-    ShoppingBag,
     SignOut,
 } from '@phosphor-icons/react';
 import { useState, useMemo } from 'react';
@@ -101,7 +101,7 @@ export function Profile() {
                 <div className={styles.actionsCard}>
                     <Link to={ROUTES.orders} className={styles.actionRow}>
                         <div className={styles.actionIcon}>
-                            <ShoppingBag size={20} />
+                            <Package size={20} />
                         </div>
                         <div className={styles.actionBody}>
                             <span className={styles.actionLabel}>{t('profile_my_orders')}</span>
