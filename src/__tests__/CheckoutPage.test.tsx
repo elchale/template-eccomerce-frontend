@@ -5,8 +5,12 @@
  * `POST /api/checkout/pay` (via useCheckoutPay) with the card token + contact
  * details and never navigates to an order until it has an `order_number`.
  *
+ * The flow is now a 2-step wizard: step 1 collects the shipping address, step 2
+ * mounts the Mercado Pago Brick. The Brick must NOT mount until step 2.
+ *
  * Verifies:
- * - The MercadoPago Brick renders once the cart is loaded.
+ * - Step 1 shows the address picker, NOT the MercadoPago Brick.
+ * - Continuing with a valid address advances to step 2 and mounts the Brick.
  * - approved          → success toast + navigate to the new order detail.
  * - pending_challenge → mounts the Status Screen Brick (no order, no navigate);
  *   after the challenge resolves we poll the session and, on `paid`, navigate.
@@ -208,10 +212,22 @@ function setSessionStatus(data: unknown) {
     mockUseCheckoutSessionStatus.mockReturnValue({ data });
 }
 
-async function fillAddressAndSubmit() {
-    const user = userEvent.setup();
+/**
+ * Step 1 → step 2: fill a valid address then click "Continuar al pago". The
+ * mocked `t` returns keys verbatim, so the button reads
+ * `checkout_continue_to_payment`. Resolves once the MP Brick (step 2) mounts.
+ */
+async function advanceToPayment(user: ReturnType<typeof userEvent.setup>) {
     // Populate the address so the hidden shippingAddress field validates.
     await user.click(screen.getByTestId('fill-address'));
+    await user.click(screen.getByText('checkout_continue_to_payment'));
+    await screen.findByTestId('mercadopago-form');
+}
+
+/** Full happy path through step 1 to a payment-Brick submit on step 2. */
+async function fillAddressAndSubmit() {
+    const user = userEvent.setup();
+    await advanceToPayment(user);
     await user.click(screen.getByText('mp-submit-trigger'));
     return user;
 }
@@ -229,14 +245,22 @@ describe('CheckoutPage (order-on-payment)', () => {
         });
     });
 
-    it('renders the MercadoPago Brick once the cart is loaded', async () => {
+    it('starts on the address step and does NOT mount the Brick until step 2', async () => {
+        const user = userEvent.setup();
         const Wrapper = makeWrapper();
         render(
             <Wrapper>
                 <CheckoutPage />
             </Wrapper>,
         );
-        await waitFor(() => expect(screen.getByTestId('mercadopago-form')).toBeTruthy());
+        // Step 1: address picker present, payment Brick absent.
+        await screen.findByTestId('fill-address');
+        expect(screen.queryByTestId('mercadopago-form')).toBeNull();
+
+        // Advance to step 2 → Brick mounts, address picker gone.
+        await advanceToPayment(user);
+        expect(screen.getByTestId('mercadopago-form')).toBeTruthy();
+        expect(screen.queryByTestId('fill-address')).toBeNull();
     });
 
     it('on approved: shows success toast and navigates to the new order detail', async () => {
@@ -257,7 +281,6 @@ describe('CheckoutPage (order-on-payment)', () => {
             </Wrapper>,
         );
 
-        await screen.findByTestId('mercadopago-form');
         await fillAddressAndSubmit();
 
         await waitFor(() => expect(mockPayMutateAsync).toHaveBeenCalledTimes(1));
@@ -291,7 +314,6 @@ describe('CheckoutPage (order-on-payment)', () => {
             </Wrapper>,
         );
 
-        await screen.findByTestId('mercadopago-form');
         await fillAddressAndSubmit();
 
         const statusBrick = await screen.findByTestId('mercadopago-status-brick');
@@ -325,7 +347,6 @@ describe('CheckoutPage (order-on-payment)', () => {
             </Wrapper>,
         );
 
-        await screen.findByTestId('mercadopago-form');
         const user = await fillAddressAndSubmit();
 
         const statusBrick = await screen.findByTestId('mercadopago-status-brick');
@@ -358,7 +379,6 @@ describe('CheckoutPage (order-on-payment)', () => {
             </Wrapper>,
         );
 
-        await screen.findByTestId('mercadopago-form');
         await fillAddressAndSubmit();
 
         await waitFor(() => expect(mockPayMutateAsync).toHaveBeenCalledTimes(1));
@@ -369,6 +389,31 @@ describe('CheckoutPage (order-on-payment)', () => {
             ),
         );
         expect(screen.queryByTestId('mercadopago-status-brick')).toBeNull();
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('editing the address from step 2 returns to step 1 and unmounts the Brick', async () => {
+        const user = userEvent.setup();
+        const Wrapper = makeWrapper();
+        render(
+            <Wrapper>
+                <CheckoutPage />
+            </Wrapper>,
+        );
+
+        // Reach step 2 (Brick mounted).
+        await advanceToPayment(user);
+        expect(screen.getByTestId('mercadopago-form')).toBeTruthy();
+
+        // The "editar" link reads `checkout_edit_address` under the key-verbatim
+        // translation mock. Clicking it returns to step 1.
+        await user.click(screen.getByText('checkout_edit_address'));
+
+        // Back on step 1: address picker present, payment Brick gone (unmounted).
+        await screen.findByTestId('fill-address');
+        expect(screen.queryByTestId('mercadopago-form')).toBeNull();
+        // No payment was attempted and we never left the page.
+        expect(mockPayMutateAsync).not.toHaveBeenCalled();
         expect(mockNavigate).not.toHaveBeenCalled();
     });
 });
