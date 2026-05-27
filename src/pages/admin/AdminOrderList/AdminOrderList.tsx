@@ -18,7 +18,7 @@ import {
     TableColumn,
 } from '@/components/ui';
 import { PAGINATION } from '@/constants/pagination';
-import { ROUTES } from '@/constants/routes';
+import { buildRoute } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 import styles from './AdminOrderList.module.css';
@@ -112,10 +112,7 @@ export function AdminOrderList() {
                                     </TableCell>
                                     <TableCell>
                                         <Link
-                                            to={ROUTES.adminOrderDetail.replace(
-                                                ':id',
-                                                String(order.id),
-                                            )}
+                                            to={buildRoute.adminOrderDetail(order.id)}
                                             className={styles.viewBtn}
                                             title={t('view', { ns: 'common' })}
                                         >

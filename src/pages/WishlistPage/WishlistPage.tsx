@@ -61,7 +61,7 @@ export function WishlistPage() {
                     title={t('wishlist_empty_title')}
                     message={t('wishlist_empty_message')}
                     action={
-                        <Link to={ROUTES.shop}>
+                        <Link to={ROUTES.home}>
                             <Button variant="primary">{t('wishlist_browse_products')}</Button>
                         </Link>
                     }

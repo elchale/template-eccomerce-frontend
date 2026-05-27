@@ -14,7 +14,7 @@ import {
 } from '@/api';
 import { Input, Select } from '@/components/forms';
 import { Button, Spinner, Card } from '@/components/ui';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, buildRoute } from '@/constants/routes';
 import { applyServerErrors } from '@/lib/applyServerErrors';
 import type { AdminProductRequest } from '@/types/admin';
 import type { ProductImage } from '@/types/product';
@@ -190,7 +190,7 @@ export function AdminProductForm() {
             createProduct.mutate(productData, {
                 onSuccess: (data) => {
                     toast.success(t('product_form_created'));
-                    navigate(ROUTES.adminProductEdit.replace(':id', String(data.id)));
+                    navigate(buildRoute.adminProductEdit(data.id));
                 },
                 onError: (error) => {
                     const applied = applyServerErrors({

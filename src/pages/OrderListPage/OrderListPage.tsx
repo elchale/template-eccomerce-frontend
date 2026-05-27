@@ -72,7 +72,7 @@ export function OrderListPage() {
                     title={t('orders_empty_title')}
                     message={t('orders_empty_message')}
                     action={
-                        <Link to={ROUTES.shop}>
+                        <Link to={ROUTES.home}>
                             <Button variant="primary">{t('orders_start_shopping')}</Button>
                         </Link>
                     }
