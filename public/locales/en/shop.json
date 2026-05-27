@@ -221,6 +221,7 @@
   "payment_mercadopago_load_failed": "Couldn't load Mercado Pago. Please try again.",
   "payment_mercadopago_processing_title": "Processing your Mercado Pago payment...",
   "payment_mercadopago_processing_text": "Don't close this window. We're verifying your transaction.",
+  "payment_mercadopago_challenge": "Complete your bank's security verification. Don't close this window.",
   "mercadopagoForm.title": "Pay with Mercado Pago",
   "mercadopagoForm.description": "Pay with credit or debit card. Your data is protected by Mercado Pago.",
   "checkout_email_invalid": "Invalid email address",

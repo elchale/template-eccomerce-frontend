@@ -221,6 +221,7 @@
   "payment_mercadopago_load_failed": "Não foi possível carregar o Mercado Pago. Tente novamente.",
   "payment_mercadopago_processing_title": "Processando o seu pagamento com Mercado Pago...",
   "payment_mercadopago_processing_text": "Não feche esta janela. Estamos verificando a sua transação.",
+  "payment_mercadopago_challenge": "Conclua a verificação de segurança do seu banco. Não feche esta janela.",
   "mercadopagoForm.title": "Pagar com Mercado Pago",
   "mercadopagoForm.description": "Pague com cartão de crédito ou débito. Seus dados estão protegidos pelo Mercado Pago.",
   "checkout_email_invalid": "Endereço de e-mail inválido",

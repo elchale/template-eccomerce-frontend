@@ -62,6 +62,41 @@ interface MercadoPagoCardPaymentBrickSettings {
     callbacks: MercadoPagoBrickCallbacks;
 }
 
+/**
+ * Settings passed to bricks().create('statusScreen', ...).
+ *
+ * The Status Screen Brick renders the 3DS bank challenge (from
+ * `additionalInfo.externalResourceURL` + `creq`) and then displays the final
+ * payment status itself. It is mounted on a `pending_challenge` response from
+ * the backend — the Card Payment Brick does NOT render the challenge.
+ */
+interface MercadoPagoStatusScreenBrickSettings {
+    initialization: {
+        /** MP payment id returned by the backend on `pending_challenge`. */
+        paymentId: string;
+        /** 3DS challenge data — present only when a challenge is required. */
+        additionalInfo?: {
+            externalResourceURL?: string;
+            creq?: string;
+        };
+    };
+    customization?: {
+        visual?: {
+            style?: { theme?: 'default' | 'dark' | 'flat' | 'bootstrap' };
+            hideStatusDetails?: boolean;
+            hideTransactionDate?: boolean;
+        };
+        backUrls?: {
+            error?: string;
+            return?: string;
+        };
+    };
+    callbacks?: {
+        onReady?: () => void;
+        onError?: (error: unknown) => void;
+    };
+}
+
 /** Controller returned by bricks().create. */
 interface MercadoPagoBrickController {
     unmount: () => Promise<void> | void;
@@ -69,11 +104,18 @@ interface MercadoPagoBrickController {
 
 /** Bricks builder exposed by MercadoPago instance. */
 interface MercadoPagoBricks {
-    create: (
-        brickName: 'cardPayment',
-        containerId: string,
-        settings: MercadoPagoCardPaymentBrickSettings,
-    ) => Promise<MercadoPagoBrickController>;
+    create: {
+        (
+            brickName: 'cardPayment',
+            containerId: string,
+            settings: MercadoPagoCardPaymentBrickSettings,
+        ): Promise<MercadoPagoBrickController>;
+        (
+            brickName: 'statusScreen',
+            containerId: string,
+            settings: MercadoPagoStatusScreenBrickSettings,
+        ): Promise<MercadoPagoBrickController>;
+    };
 }
 
 /** A built MercadoPago SDK instance. */

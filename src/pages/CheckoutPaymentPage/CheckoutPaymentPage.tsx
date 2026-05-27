@@ -14,8 +14,13 @@ import {
     useCulqiCharge,
     useMercadoPagoProcess,
 } from '@/api/usePayments';
-import type { CulqiOrderResponse } from '@/api/usePayments';
-import { CulqiForm, IzipayForm, MercadoPagoForm } from '@/components/payments';
+import type { CulqiOrderResponse, MercadoPagoThreeDs } from '@/api/usePayments';
+import {
+    CulqiForm,
+    IzipayForm,
+    MercadoPagoForm,
+    MercadoPagoStatusBrick,
+} from '@/components/payments';
 import type { IzipayPaymentResult } from '@/components/payments';
 import { Button, Spinner, Skeleton } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
@@ -73,6 +78,13 @@ export function CheckoutPaymentPage() {
     const [step, setStep] = useState<PaymentStep>('loading');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    // 3DS challenge data — set when the backend returns `pending_challenge`.
+    // While present (step === 'challenge') the Status Screen Brick is mounted.
+    const [challenge, setChallenge] = useState<{
+        paymentId: string;
+        threeDs: MercadoPagoThreeDs;
+    } | null>(null);
+
     // Timeout ref — switches loading → error after 30s if preparation stalls.
     const tokenTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -89,6 +101,7 @@ export function CheckoutPaymentPage() {
         if (!orderNumber) return;
         setStep('loading');
         setErrorMessage(null);
+        setChallenge(null);
 
         // Mercado Pago needs no server round-trip before rendering the Brick —
         // the Brick fetches its own settings from MP directly using the public
@@ -214,6 +227,16 @@ export function CheckoutPaymentPage() {
 
                     toast.success(t('payment_success'), { duration: 3000 });
                     navigate(ROUTES.orderDetail.replace(':orderNumber', orderNumber));
+                } else if (result.status === 'pending_challenge' && result.three_ds) {
+                    // 3DS: the Card Payment Brick does NOT render the challenge.
+                    // Mount the Status Screen Brick with the returned payment id
+                    // + challenge data. The order stays unconfirmed until the
+                    // challenge resolves (webhook is the source of truth).
+                    setChallenge({
+                        paymentId: result.payment_id,
+                        threeDs: result.three_ds,
+                    });
+                    setStep('challenge');
                 } else if (
                     result.status === 'in_process' ||
                     result.status === 'pending'
@@ -254,6 +277,20 @@ export function CheckoutPaymentPage() {
         setStep('error');
         toast.error(message, { duration: 8000 });
     }, []);
+
+    /**
+     * The buyer completed (or abandoned) the 3DS bank challenge in the Status
+     * Screen Brick. We don't read MP's outcome client-side — the /pay webhook
+     * is the source of truth. Invalidate orders + cart so the order detail page
+     * reflects ground truth, then route there with ?verifying=1 so the buyer
+     * sees the live status (success or masked error) instead of a blank page.
+     */
+    const handleChallengeResolved = useCallback(() => {
+        qc.invalidateQueries({ queryKey: CART_KEYS.all });
+        qc.invalidateQueries({ queryKey: ORDER_KEYS.all });
+        toast(t('payment_verifying'), { duration: 5000 });
+        navigate(`${ROUTES.orderDetail.replace(':orderNumber', orderNumber)}?verifying=1`);
+    }, [navigate, orderNumber, t, qc]);
 
     // ── Culqi handlers (dormant gateway) ──────────────────────────────────────
 
@@ -505,6 +542,19 @@ export function CheckoutPaymentPage() {
                                 </div>
                             </div>
                         )}
+
+                        {/* State: 3DS challenge — Status Screen Brick renders
+                            the bank challenge then the final status */}
+                        {step === 'challenge' && IS_MERCADOPAGO && !!challenge ? (
+                            <MercadoPagoStatusBrick
+                                publicKey={MP_PUBLIC_KEY}
+                                paymentId={challenge.paymentId}
+                                externalResourceUrl={challenge.threeDs.external_resource_url}
+                                creq={challenge.threeDs.creq}
+                                onChallengeResolved={handleChallengeResolved}
+                                onError={handleMercadoPagoError}
+                            />
+                        ) : null}
 
                         {/* State: error */}
                         {step === 'error' && (

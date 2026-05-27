@@ -32,12 +32,39 @@ export interface MercadoPagoProcessPayload {
     deviceId?: string | undefined;
 }
 
+/**
+ * 3DS challenge payload returned by the backend on a `pending_challenge`
+ * response (HTTP 200). It carries exactly what the MP Status Screen Brick
+ * needs to render the bank challenge — no raw MP body, no secrets.
+ */
+export interface MercadoPagoThreeDs {
+    /** Bank ACS challenge URL — forwarded as `externalResourceURL` to the Brick. */
+    external_resource_url: string;
+    /** Challenge request token — forwarded as `creq` to the Brick. */
+    creq: string;
+}
+
+/**
+ * Response from /api/payments/mercadopago/process/.
+ *
+ * - `approved` (paid=true) → existing success path.
+ * - `pending_challenge` → mount the Status Screen Brick with `three_ds` data;
+ *   the order stays unconfirmed until the challenge resolves (webhook is the
+ *   source of truth).
+ * - `in_process` / `pending` (other) → existing "confirm by email" path.
+ * - rejected → 402 with a safe `{detail}` body (handled in the error branch).
+ */
 export interface MercadoPagoProcessResponse {
     paid: boolean;
     order_number: string;
     payment_id: string;
-    /** MP payment status — 'approved' | 'in_process' | 'pending' | other. */
+    /**
+     * MP payment status — 'approved' | 'pending_challenge' | 'in_process'
+     * | 'pending' | other.
+     */
     status: string;
+    /** Present only when status === 'pending_challenge'. */
+    three_ds?: MercadoPagoThreeDs;
 }
 
 /**

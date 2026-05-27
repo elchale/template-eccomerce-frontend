@@ -133,6 +133,45 @@ describe('useMercadoPagoProcess', () => {
         expect(result.current.data?.paid).toBe(true);
     });
 
+    it('models the pending_challenge response shape with three_ds data (HTTP 200)', async () => {
+        const mockPost = vi.mocked(api.post);
+        mockPost.mockResolvedValueOnce({
+            data: {
+                paid: false,
+                order_number: 'QLCA-20260501-3DS',
+                payment_id: '123456789',
+                status: 'pending_challenge',
+                three_ds: {
+                    external_resource_url: 'https://acs.bank.example/challenge',
+                    creq: 'eyJjcmVxIjoiZGF0YSJ9',
+                },
+            },
+        });
+
+        const { Wrapper } = createWrapper();
+        const { result } = renderHook(() => useMercadoPagoProcess(), { wrapper: Wrapper });
+
+        act(() => {
+            result.current.mutate({
+                orderNumber: 'QLCA-20260501-3DS',
+                token: 'mp_token_3ds',
+                paymentMethodId: 'master',
+                installments: 1,
+                payerEmail: 'test@test.com',
+            });
+        });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+        expect(result.current.data?.status).toBe('pending_challenge');
+        expect(result.current.data?.paid).toBe(false);
+        expect(result.current.data?.payment_id).toBe('123456789');
+        expect(result.current.data?.three_ds?.external_resource_url).toBe(
+            'https://acs.bank.example/challenge',
+        );
+        expect(result.current.data?.three_ds?.creq).toBe('eyJjcmVxIjoiZGF0YSJ9');
+    });
+
     it('surfaces the safe {detail, code} error body on a 402 rejection', async () => {
         const mockPost = vi.mocked(api.post);
         mockPost.mockRejectedValueOnce({

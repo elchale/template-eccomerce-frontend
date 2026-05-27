@@ -1,0 +1,1 @@
+export { MercadoPagoStatusBrick } from './MercadoPagoStatusBrick';

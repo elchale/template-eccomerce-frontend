@@ -1,0 +1,36 @@
+.wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    width: 100%;
+}
+
+/* ── Loading state ─────────────────────────────────────────────────────────── */
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: center;
+    padding: var(--spacing-2xl) var(--spacing-md);
+}
+
+.loadingText {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* ── Brick container ──────────────────────────────────────────────────────── */
+
+/*
+ * The MP Status Screen Brick injects its own iframe / DOM here (it renders the
+ * bank challenge and then the final status). We do not style its internals —
+ * the Brick lives in a separate document context. Only set a min-height so the
+ * page does not jump while the challenge mounts.
+ */
+.brickContainer {
+    min-height: 220px;
+    width: 100%;
+}

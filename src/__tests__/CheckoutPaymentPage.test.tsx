@@ -96,7 +96,11 @@ vi.mock('@/components/payments', () => ({
         <div data-testid="mercadopago-form">
             <button
                 onClick={() =>
-                    onPaymentReady({
+                    // The real Card Payment Brick awaits onSubmit and swallows
+                    // the rejection (it re-throws only to re-enable its button).
+                    // Mirror that so a rejected submit doesn't surface as an
+                    // unhandled rejection in the test environment.
+                    void onPaymentReady({
                         token: 'mp_token_abc',
                         payment_method_id: 'visa',
                         issuer_id: '310',
@@ -106,12 +110,40 @@ vi.mock('@/components/payments', () => ({
                             email: 'test@test.com',
                             identification: { type: 'DNI', number: '12345678' },
                         },
+                    }).catch(() => {
+                        /* handled by the page; Brick re-enables submit */
                     })
                 }
             >
                 mp-submit-trigger
             </button>
             <button onClick={() => onError('Tarjeta rechazada')}>mp-error-trigger</button>
+        </div>
+    ),
+    // The Status Screen Brick renders the 3DS challenge. We expose the
+    // externalResourceURL + creq it was mounted with so tests can assert the
+    // backend `three_ds` data was forwarded, plus a trigger to simulate the
+    // buyer completing the challenge.
+    MercadoPagoStatusBrick: ({
+        paymentId,
+        externalResourceUrl,
+        creq,
+        onChallengeResolved,
+    }: {
+        publicKey: string;
+        paymentId: string;
+        externalResourceUrl: string;
+        creq: string;
+        onChallengeResolved: () => void;
+        onError: (m: string) => void;
+    }) => (
+        <div
+            data-testid="mercadopago-status-brick"
+            data-payment-id={paymentId}
+            data-external-resource-url={externalResourceUrl}
+            data-creq={creq}
+        >
+            <button onClick={() => onChallengeResolved()}>mp-challenge-resolved-trigger</button>
         </div>
     ),
     CulqiForm: () => <div data-testid="culqi-form" />,
@@ -314,5 +346,151 @@ describe('CheckoutPaymentPage (Mercado Pago — active gateway)', () => {
                 expect.stringMatching(/QLCA-20260501-ABCD\?verifying=1$/),
             );
         });
+    });
+
+    it('on Brick submit (pending_challenge): mounts the Status Screen Brick with the returned externalResourceURL + creq', async () => {
+        vi.mocked(useOrderDetail).mockReturnValue({
+            data: PENDING_ORDER,
+            isLoading: false,
+        } as unknown as ReturnType<typeof useOrderDetail>);
+
+        const mockMutateAsync = vi.fn(async () => ({
+            paid: false,
+            order_number: 'QLCA-20260501-ABCD',
+            payment_id: '777777',
+            status: 'pending_challenge',
+            three_ds: {
+                external_resource_url: 'https://acs.bank.example/challenge',
+                creq: 'eyJjcmVxIjoiZGF0YSJ9',
+            },
+        }));
+
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
+            mutate: vi.fn(),
+            mutateAsync: mockMutateAsync,
+            isPending: false,
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
+
+        const Wrapper = makeWrapper();
+        render(
+            <Wrapper>
+                <CheckoutPaymentPage />
+            </Wrapper>,
+        );
+
+        const brickForm = await screen.findByTestId('mercadopago-form');
+        expect(brickForm).toBeTruthy();
+
+        const user = userEvent.setup();
+        await user.click(screen.getByText('mp-submit-trigger'));
+
+        await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+
+        // The Status Screen Brick is mounted with the backend three_ds data.
+        const statusBrick = await screen.findByTestId('mercadopago-status-brick');
+        expect(statusBrick.getAttribute('data-payment-id')).toBe('777777');
+        expect(statusBrick.getAttribute('data-external-resource-url')).toBe(
+            'https://acs.bank.example/challenge',
+        );
+        expect(statusBrick.getAttribute('data-creq')).toBe('eyJjcmVxIjoiZGF0YSJ9');
+
+        // No success toast / navigation yet — the challenge is still in flight.
+        expect(vi.mocked(toast.success)).not.toHaveBeenCalled();
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('after the 3DS challenge resolves: navigates to order detail with verifying=1', async () => {
+        vi.mocked(useOrderDetail).mockReturnValue({
+            data: PENDING_ORDER,
+            isLoading: false,
+        } as unknown as ReturnType<typeof useOrderDetail>);
+
+        const mockMutateAsync = vi.fn(async () => ({
+            paid: false,
+            order_number: 'QLCA-20260501-ABCD',
+            payment_id: '777777',
+            status: 'pending_challenge',
+            three_ds: {
+                external_resource_url: 'https://acs.bank.example/challenge',
+                creq: 'eyJjcmVxIjoiZGF0YSJ9',
+            },
+        }));
+
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
+            mutate: vi.fn(),
+            mutateAsync: mockMutateAsync,
+            isPending: false,
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
+
+        const Wrapper = makeWrapper();
+        render(
+            <Wrapper>
+                <CheckoutPaymentPage />
+            </Wrapper>,
+        );
+
+        await screen.findByTestId('mercadopago-form');
+        const user = userEvent.setup();
+        await user.click(screen.getByText('mp-submit-trigger'));
+
+        const statusBrick = await screen.findByTestId('mercadopago-status-brick');
+        expect(statusBrick).toBeTruthy();
+
+        await user.click(screen.getByText('mp-challenge-resolved-trigger'));
+
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith(
+                expect.stringMatching(/QLCA-20260501-ABCD\?verifying=1$/),
+            );
+        });
+    });
+
+    it('on Brick submit (rejected): shows masked error toast and does NOT navigate', async () => {
+        vi.mocked(useOrderDetail).mockReturnValue({
+            data: PENDING_ORDER,
+            isLoading: false,
+        } as unknown as ReturnType<typeof useOrderDetail>);
+
+        // A rejection comes back as a 402 with a safe {detail} body.
+        const mockMutateAsync = vi.fn(async () => {
+            throw {
+                response: {
+                    status: 402,
+                    data: {
+                        detail: 'No pudimos validar la verificación de seguridad de tu banco.',
+                        code: 'declined',
+                    },
+                },
+            };
+        });
+
+        vi.mocked(useMercadoPagoProcess).mockReturnValue({
+            mutate: vi.fn(),
+            mutateAsync: mockMutateAsync,
+            isPending: false,
+        } as unknown as ReturnType<typeof useMercadoPagoProcess>);
+
+        const Wrapper = makeWrapper();
+        render(
+            <Wrapper>
+                <CheckoutPaymentPage />
+            </Wrapper>,
+        );
+
+        await screen.findByTestId('mercadopago-form');
+        const user = userEvent.setup();
+        await user.click(screen.getByText('mp-submit-trigger'));
+
+        await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+
+        // The masked backend detail is surfaced; no challenge brick, no navigation.
+        await waitFor(() => {
+            expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+                'No pudimos validar la verificación de seguridad de tu banco.',
+                { duration: 8000 },
+            );
+        });
+        expect(screen.queryByTestId('mercadopago-status-brick')).toBeNull();
+        expect(mockNavigate).not.toHaveBeenCalled();
     });
 });
