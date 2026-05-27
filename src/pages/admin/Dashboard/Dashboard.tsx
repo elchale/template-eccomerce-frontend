@@ -15,7 +15,7 @@ import {
     TableColumn,
     EmptyState,
 } from '@/components/ui';
-import { ROUTES } from '@/constants/routes';
+import { buildRoute } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 import styles from './Dashboard.module.css';
@@ -150,10 +150,7 @@ export function Dashboard() {
                                     <TableRow key={order.id}>
                                         <TableCell>
                                             <Link
-                                                to={ROUTES.adminOrderDetail.replace(
-                                                    ':id',
-                                                    String(order.id),
-                                                )}
+                                                to={buildRoute.adminOrderDetail(order.id)}
                                                 className={styles.orderLink}
                                             >
                                                 {order.order_number}

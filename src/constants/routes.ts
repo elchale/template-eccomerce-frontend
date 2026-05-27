@@ -18,7 +18,9 @@ export const ROUTES = {
     terms: '/terms',
 
     // Shop
-    shop: '/shop',
+    // NOTE: the catalog/storefront landing is `home` ('/home'); there is no bare
+    // '/shop' route. Link to the catalog with ROUTES.home. Only the parametric
+    // '/shop/...' routes below are registered (built via buildRoute).
     shopCategory: '/shop/category/:slug',
     shopProduct: '/shop/product/:slug',
     cart: '/cart',
@@ -56,7 +58,15 @@ export const ROUTES = {
 
     // Admin Email Logs
     adminEmailLogs: '/admin/email-logs',
-};
+} as const;
+
+/**
+ * Union of every registered route-path literal. Static `<Link to>` / `navigate()`
+ * targets should be one of these (or the output of `buildRoute`, whose return
+ * values correspond to the parametric entries above). Typing a navigation `to`
+ * prop against `RoutePath` turns a dead/mistyped link into a compile error.
+ */
+export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
 
 /**
  * URL builders for parametric routes. Consumers should call these instead of

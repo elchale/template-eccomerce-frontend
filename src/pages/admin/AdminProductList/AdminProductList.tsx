@@ -21,7 +21,7 @@ import {
     Badge,
 } from '@/components/ui';
 import { PAGINATION } from '@/constants/pagination';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, buildRoute } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
 
 import styles from './AdminProductList.module.css';
@@ -280,10 +280,7 @@ export function AdminProductList() {
                                     <TableCell>
                                         <div className={styles.actions}>
                                             <Link
-                                                to={ROUTES.adminProductEdit.replace(
-                                                    ':id',
-                                                    String(product.id),
-                                                )}
+                                                to={buildRoute.adminProductEdit(product.id)}
                                                 className={styles.actionBtn}
                                                 title={t('edit', { ns: 'common' })}
                                             >
