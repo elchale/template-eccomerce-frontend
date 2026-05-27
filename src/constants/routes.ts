@@ -23,7 +23,6 @@ export const ROUTES = {
     shopProduct: '/shop/product/:slug',
     cart: '/cart',
     checkout: '/checkout',
-    checkoutPay: '/checkout/pay/:orderNumber',
     orders: '/orders',
     orderDetail: '/orders/:orderNumber',
     wishlist: '/wishlist',
@@ -67,7 +66,6 @@ export const ROUTES = {
 export const buildRoute = {
     shopCategory: (slug: string) => `/shop/category/${slug}`,
     shopProduct: (slug: string) => `/shop/product/${slug}`,
-    checkoutPay: (orderNumber: string) => `/checkout/pay/${orderNumber}`,
     orderDetail: (orderNumber: string) => `/orders/${orderNumber}`,
     adminProductEdit: (id: number) => `/admin/products/${id}/edit`,
     adminOrderDetail: (id: number) => `/admin/orders/${id}`,
@@ -111,11 +109,12 @@ export const API_ROUTES = {
     cartClear: '/api/cart/clear/',
     cartMerge: '/api/cart/merge/',
     checkout: '/api/checkout/',
+    // Order-on-payment: a single endpoint that creates the payment AND, only
+    // on confirmation, the order. The cart is the durable pre-payment state.
+    checkoutPay: '/api/checkout/pay',
+    checkoutSessionStatus: (uuid: string) => `/api/checkout/session/${uuid}/status`,
     orders: '/api/orders/',
     orderDetail: (orderNumber: string) => `/api/orders/${orderNumber}/`,
-
-    // Payments — Mercado Pago (active gateway)
-    mercadopagoProcess: '/api/payments/mercadopago/process/',
 
     // Payments — Culqi (dormant, kept for fallback)
     culqiCharge: '/api/payments/culqi/charge/',

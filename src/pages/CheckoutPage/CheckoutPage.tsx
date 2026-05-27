@@ -1,13 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft } from '@phosphor-icons/react';
-import type { AxiosError } from 'axios';
-import { useState } from 'react';
+import { ArrowLeft, LockKey } from '@phosphor-icons/react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useCart, useCheckout } from '@/api';
+import { useCart, useCheckoutPay, useCheckoutSessionStatus } from '@/api';
+import type { CheckoutThreeDs } from '@/api';
+import { CART_KEYS } from '@/api/useCart';
+import { ORDER_KEYS } from '@/api/useOrders';
 import {
     AddressPicker,
     EMPTY_ADDRESS,
@@ -15,54 +18,86 @@ import {
     type AddressFields,
 } from '@/components/features/AddressPicker';
 import { FormInput } from '@/components/forms/FormField/FormInput';
+import { MercadoPagoForm, MercadoPagoStatusBrick } from '@/components/payments';
 import { Button, Spinner } from '@/components/ui';
 import { ROUTES, buildRoute } from '@/constants/routes';
 import { formatCurrency } from '@/lib/formatCurrency';
+import { getDeviceId } from '@/lib/mercadopago';
 import { useAuthStore } from '@/stores/useAuthStore';
-import {
-    BACKEND_CHECKOUT_FIELD_MAP,
-    checkoutSchema,
-    type CheckoutFormValues,
-} from '@/types/checkout';
+import { checkoutSchema, type CheckoutFormValues } from '@/types/checkout';
 
 import styles from './CheckoutPage.module.css';
 
+// Mercado Pago is the active gateway. The public key is read at build time.
+const MP_PUBLIC_KEY = (import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY as string | undefined) ?? '';
+
 /**
- * `/checkout` — Step 1 of 2: shipping/billing address + contact.
- * Submitting creates a pending order on the backend and routes to
- * `/checkout/payment/:orderNumber` where Izipay handles tender capture.
+ * Sub-view for the in-page payment flow. The order does NOT exist until the
+ * payment confirms, so we never navigate to an order until we have an
+ * `order_number` (from the pay response or the session-status poll).
+ */
+type PayPhase = 'ready' | 'verifying' | 'error';
+
+/**
+ * `/checkout` — single-page checkout under the order-on-payment model.
  *
- * Field validation runs through `checkoutSchema` (Zod) inside RHF.
- * Optional fields use conditional spread on submit so `null/empty` never
- * goes to the backend — preserves true omit-semantics under
- * `exactOptionalPropertyTypes`. Backend field errors come back as a flat
- * object; we map them back to RHF via `BACKEND_CHECKOUT_FIELD_MAP`.
+ * The cart is the durable pre-payment state (it lives on the server per user,
+ * resumable from any device). This page collects the shipping/contact details
+ * and tokenises the card via the Mercado Pago Brick, then calls
+ * `POST /api/checkout/pay` — which creates the order ONLY when the payment is
+ * confirmed:
+ *
+ *  - `approved`          → success toast + navigate to the new order detail.
+ *  - `pending_challenge` → mount the Status Screen Brick (3DS), then poll
+ *    `GET /api/checkout/session/<uuid>/status` until `paid` (→ order) or
+ *    `failed` (→ masked error, cart intact). A "verificando tu pago" state is
+ *    shown throughout.
+ *  - `pending` / `in_process` → "te confirmaremos por correo" path.
+ *  - rejected (402)      → masked `{detail}` toast, cart stays intact.
+ *
+ * If the buyer abandons or the card is declined, no order is created and the
+ * cart is untouched — they can come back and pay again from the cart.
  */
 export function CheckoutPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const qc = useQueryClient();
     const getUser = useAuthStore((s) => s.getUser);
     const user = getUser();
     const { t } = useTranslation('shop');
 
     const { data: cart, isLoading: cartLoading } = useCart();
-    const checkout = useCheckout();
+    const pay = useCheckoutPay();
 
-    // Structured address state. The shipping_address sent to the backend is
-    // assembled from this — keeps the API contract intact while the UI gains
-    // the Temu-style fields (country / departamento / distrito / etc.). The
-    // legacy `shippingAddress` form field is kept under the hood so RHF
-    // validation still gates submission against a non-empty address.
+    // Coupon code carried over from the cart page (validated there; the server
+    // re-validates authoritatively when the order is created).
+    const couponCode = (location.state as { couponCode?: string } | null)?.couponCode ?? '';
+
+    // Structured address state — assembled into the backend address string.
     const [address, setAddress] = useState<AddressFields>(() => ({
         ...EMPTY_ADDRESS,
         recipient: [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim(),
     }));
 
+    const [payPhase, setPayPhase] = useState<PayPhase>('ready');
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Set when the backend returns `pending_challenge`. While present, the
+    // Status Screen Brick is mounted and we poll the session status.
+    const [challenge, setChallenge] = useState<{
+        sessionUuid: string;
+        paymentId: string;
+        threeDs: CheckoutThreeDs;
+    } | null>(null);
+    // Once the challenge is presented + resolved, start polling the session.
+    const [pollingUuid, setPollingUuid] = useState<string | null>(null);
+
     const {
         control,
-        handleSubmit,
         watch,
-        setError,
         setValue,
+        getValues,
+        trigger,
         formState: { errors },
         register,
     } = useForm<CheckoutFormValues>({
@@ -81,78 +116,148 @@ export function CheckoutPage() {
 
     const handleAddressChange = (next: AddressFields) => {
         setAddress(next);
-        // Mirror the joined string into the hidden RHF field so the zod
-        // `min(1)` guard sees the latest state and field errors clear as
-        // soon as the user fills the address in.
-        setValue('shippingAddress', formatAddressForBackend(next), {
-            shouldValidate: true,
-        });
+        setValue('shippingAddress', formatAddressForBackend(next), { shouldValidate: true });
     };
 
-    const onSubmit = (values: CheckoutFormValues) => {
-        const billingAddress = values.sameAsShipping ? '' : (values.billingAddress?.trim() ?? '');
-        // Phone comes from the structured address; fall back to the
-        // billing-side phone field if the user typed there instead.
-        const phone = (address.phone || values.phone || '').trim();
-        const notes = values.notes?.trim() ?? '';
-        checkout.mutate(
-            {
-                shipping_address: formatAddressForBackend(address),
-                email: values.email.trim(),
-                ...(billingAddress && { billing_address: billingAddress }),
-                ...(phone && { phone }),
-                ...(notes && { notes }),
-            },
-            {
-                onSuccess: (data: { order_number: string }) => {
-                    toast.success(t('checkout_success'), { duration: 2000 });
-                    navigate(buildRoute.checkoutPay(data.order_number));
-                },
-                onError: (error) => {
-                    const axiosError = error as AxiosError<Record<string, unknown>>;
-                    const responseData = axiosError?.response?.data;
-                    const status = axiosError?.response?.status;
+    // ── Session-status poll (after a 3DS challenge) ───────────────────────────
+    const sessionStatus = useCheckoutSessionStatus(pollingUuid, !!pollingUuid);
+    const sessionData = sessionStatus.data;
 
-                    // DRF returns either a string or string[] per field; anything else is unexpected
-                    // — we coerce defensively so we never surface `[object Object]` to the user.
-                    const coerceMsg = (value: unknown): string => {
-                        if (typeof value === 'string') return value;
-                        if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
-                        return '';
-                    };
+    useEffect(() => {
+        if (!pollingUuid || !sessionData) return;
 
-                    if (responseData && typeof responseData === 'object' && status === 400) {
-                        let hasFieldErrors = false;
-                        for (const [backendKey, localKey] of Object.entries(
-                            BACKEND_CHECKOUT_FIELD_MAP,
-                        )) {
-                            const msg = coerceMsg(responseData[backendKey]);
-                            if (msg) {
-                                setError(localKey, { type: 'server', message: msg });
-                                hasFieldErrors = true;
-                            }
-                        }
-                        if (hasFieldErrors) return;
+        if (sessionData.status === 'paid' && sessionData.order_number) {
+            const orderNumber = sessionData.order_number;
+            setPollingUuid(null);
+            setChallenge(null);
+            void qc.invalidateQueries({ queryKey: CART_KEYS.all });
+            void qc.invalidateQueries({ queryKey: ORDER_KEYS.all });
+            toast.success(t('payment_success'), { duration: 3000 });
+            navigate(buildRoute.orderDetail(orderNumber));
+        } else if (sessionData.status === 'failed' || sessionData.status === 'expired') {
+            setPollingUuid(null);
+            setChallenge(null);
+            void qc.invalidateQueries({ queryKey: CART_KEYS.all });
+            setErrorMessage(t('payment_error_contact'));
+            setPayPhase('error');
+            toast.error(t('payment_error_contact'), { duration: 8000 });
+        }
+    }, [pollingUuid, sessionData, qc, navigate, t]);
 
-                        const nonFieldMsg = coerceMsg(responseData.non_field_errors);
-                        if (nonFieldMsg) {
-                            toast.error(nonFieldMsg);
-                            return;
-                        }
+    // ── Map a /pay error to a safe, user-facing message ───────────────────────
+    const maskedError = useCallback(
+        (error: unknown): string => {
+            const axiosErr = error as { response?: { data?: { detail?: string } } };
+            return axiosErr?.response?.data?.detail ?? t('payment_error_contact');
+        },
+        [t],
+    );
 
-                        const detailMsg = coerceMsg(responseData.detail);
-                        if (detailMsg) {
-                            toast.error(detailMsg);
-                            return;
-                        }
-                    }
+    /**
+     * The Brick produced a tokenised card. Validate the address/contact fields
+     * first; if they fail, surface the errors and reject so the Brick re-enables
+     * its submit button. Otherwise call `/api/checkout/pay` and branch on the
+     * response. The Promise we return tells the Brick whether to re-enable its
+     * button (resolve = stop, reject = re-enable).
+     */
+    const handlePaymentReady = useCallback(
+        async (cardFormData: MercadoPagoCardFormData) => {
+            const valid = await trigger();
+            if (!valid) {
+                toast.error(t('checkout_fill_required'), { duration: 8000 });
+                throw new Error('invalid_form');
+            }
 
-                    toast.error(t('checkout_error'));
-                },
-            },
-        );
-    };
+            const values = getValues();
+            const billingAddress = values.sameAsShipping
+                ? ''
+                : (values.billingAddress?.trim() ?? '');
+            const phone = (address.phone || values.phone || '').trim();
+            const notes = values.notes?.trim() ?? '';
 
+            setErrorMessage(null);
+            setPayPhase('verifying');
+
+            try {
+                const result = await pay.mutateAsync({
+                    shippingAddress: formatAddressForBackend(address),
+                    billingAddress: billingAddress || undefined,
+                    email: values.email.trim(),
+                    phone: phone || undefined,
+                    notes: notes || undefined,
+                    couponCode: couponCode || undefined,
+                    token: cardFormData.token,
+                    paymentMethodId: cardFormData.payment_method_id,
+                    issuerId: cardFormData.issuer_id,
+                    installments: cardFormData.installments,
+                    payerEmail: cardFormData.payer.email,
+                    payerIdType: cardFormData.payer.identification?.type,
+                    payerIdNumber: cardFormData.payer.identification?.number,
+                    deviceId: getDeviceId(),
+                });
+
+                if ('paid' in result) {
+                    // Approved: the order now exists (backend spreads OrderDetail
+                    // whose own `status` is e.g. "confirmed", so we key off
+                    // `paid`, not a `status:'approved'`). Cart cleared server-side.
+                    toast.success(t('payment_success'), { duration: 3000 });
+                    navigate(buildRoute.orderDetail(result.order_number));
+                } else if (result.status === 'pending_challenge') {
+                    // No order yet — mount the Status Screen Brick for the bank
+                    // challenge, then poll the session until it resolves.
+                    setChallenge({
+                        sessionUuid: result.session_uuid,
+                        paymentId: result.payment_id ?? '',
+                        threeDs: result.three_ds,
+                    });
+                    setPayPhase('verifying');
+                } else {
+                    // pending / in_process — the webhook will confirm; the
+                    // buyer will be notified by email. No order exists yet, so
+                    // we can't route to one — send them to their orders list
+                    // (the paid order will appear there once the webhook fires).
+                    toast(t('payment_verifying'), { duration: 6000 });
+                    navigate(ROUTES.orders);
+                }
+            } catch (error) {
+                // Rejected (402) or network error — render ONLY the backend-safe
+                // `detail`. The cart is intact; the buyer can retry.
+                const msg = maskedError(error);
+                setErrorMessage(msg);
+                setPayPhase('error');
+                toast.error(msg, { duration: 8000 });
+                throw error;
+            }
+        },
+        [trigger, getValues, address, couponCode, pay, navigate, t, maskedError],
+    );
+
+    const handlePaymentError = useCallback(
+        (message: string) => {
+            setErrorMessage(message);
+            setPayPhase('error');
+            toast.error(message, { duration: 8000 });
+        },
+        [],
+    );
+
+    /**
+     * The Status Screen Brick presented + resolved the 3DS challenge. We do not
+     * read MP's outcome client-side — the session status (driven by the webhook)
+     * is the source of truth. Start polling it.
+     */
+    const handleChallengeResolved = useCallback(() => {
+        if (challenge) setPollingUuid(challenge.sessionUuid);
+    }, [challenge]);
+
+    const resetToReady = useCallback(() => {
+        setPayPhase('ready');
+        setErrorMessage(null);
+        setChallenge(null);
+        setPollingUuid(null);
+    }, []);
+
+    // ── Loading / empty-cart guards ───────────────────────────────────────────
     if (cartLoading) {
         return (
             <div className={styles.loadingContainer}>
@@ -175,12 +280,12 @@ export function CheckoutPage() {
     }
 
     const subtotal = Number.parseFloat(cart.subtotal);
+    const total = subtotal;
 
     // Resolve zod's translation keys to display strings.
     const fieldError = (key: keyof CheckoutFormValues): string | undefined => {
         const e = errors[key];
         if (!e?.message) return undefined;
-        // Server messages already come back human-readable.
         return e.type === 'server' ? String(e.message) : t(String(e.message));
     };
 
@@ -188,15 +293,15 @@ export function CheckoutPage() {
         <div className={styles.container}>
             <button
                 className={styles.backButton}
-                onClick={() => navigate(-1)}
+                onClick={() => navigate(ROUTES.cart)}
                 type="button"
-                aria-label={t('back', { ns: 'common' })}
+                aria-label={t('payment_back_to_cart')}
             >
-                <ArrowLeft size={16} weight="bold" /> {t('checkout_title')}
+                <ArrowLeft size={16} weight="bold" /> {t('payment_back_to_cart')}
             </button>
             <h1 className={styles.title}>{t('checkout_title')}</h1>
 
-            <form className={styles.layout} onSubmit={handleSubmit(onSubmit)} noValidate>
+            <div className={styles.layout}>
                 <div className={styles.formSection}>
                     <div className={styles.card}>
                         <h2 className={styles.cardTitle}>{t('checkout_contact_info')}</h2>
@@ -220,7 +325,6 @@ export function CheckoutPage() {
                                 {fieldError('shippingAddress')}
                             </p>
                         )}
-                        {/* Keep the hidden field registered so RHF tracks the value */}
                         <input type="hidden" {...register('shippingAddress')} />
                     </div>
 
@@ -259,6 +363,85 @@ export function CheckoutPage() {
                             rows={3}
                         />
                     </div>
+
+                    {/* ── Payment card ─────────────────────────────────────── */}
+                    <div className={styles.card}>
+                        <h2 className={styles.cardTitle}>
+                            <LockKey size={18} weight="bold" aria-hidden="true" />
+                            {t('payment_title')}
+                        </h2>
+
+                        {/* Verifying state: shown while the /pay request is in
+                            flight, during the 3DS challenge, and while polling. */}
+                        {payPhase === 'verifying' && !challenge && (
+                            <div
+                                className={styles.payState}
+                                aria-live="polite"
+                                aria-busy="true"
+                            >
+                                <Spinner size="md" />
+                                <span className={styles.payStateText}>
+                                    {t('payment_verifying_inline')}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* 3DS challenge: Status Screen Brick renders the bank
+                            challenge, then we poll the session for the outcome. */}
+                        {payPhase === 'verifying' && !!challenge && (
+                            <>
+                                <MercadoPagoStatusBrick
+                                    publicKey={MP_PUBLIC_KEY}
+                                    paymentId={challenge.paymentId}
+                                    externalResourceUrl={challenge.threeDs.external_resource_url}
+                                    creq={challenge.threeDs.creq}
+                                    onChallengeResolved={handleChallengeResolved}
+                                    onError={handlePaymentError}
+                                />
+                                {!!pollingUuid && (
+                                    <div
+                                        className={styles.payState}
+                                        aria-live="polite"
+                                        aria-busy="true"
+                                    >
+                                        <Spinner size="sm" />
+                                        <span className={styles.payStateText}>
+                                            {t('payment_verifying_inline')}
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* Error state: masked message + retry (cart intact). */}
+                        {payPhase === 'error' && (
+                            <div className={styles.payError} role="alert">
+                                <p className={styles.payErrorText}>
+                                    {errorMessage ?? t('payment_error_generic')}
+                                </p>
+                                <Button variant="secondary" onClick={resetToReady}>
+                                    {t('payment_retry')}
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Ready state: the MP Brick (its submit button is the
+                            single "Pagar" action). */}
+                        {payPhase === 'ready' && (
+                            <MercadoPagoForm
+                                publicKey={MP_PUBLIC_KEY}
+                                amount={total}
+                                email={getValues('email') || (user?.email ?? '')}
+                                onPaymentReady={handlePaymentReady}
+                                onError={handlePaymentError}
+                            />
+                        )}
+
+                        <p className={styles.secureRow}>
+                            <LockKey size={14} weight="bold" aria-hidden="true" />
+                            {t('payment_secure_note_gateway', { gateway: 'Mercado Pago' })}
+                        </p>
+                    </div>
                 </div>
 
                 <aside className={styles.summary}>
@@ -294,21 +477,11 @@ export function CheckoutPage() {
                         </div>
                         <div className={`${styles.summaryRow} ${styles.totalRow}`}>
                             <span>{t('total', { ns: 'common' })}</span>
-                            <span>{formatCurrency(subtotal)}</span>
+                            <span>{formatCurrency(total)}</span>
                         </div>
                     </div>
-
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="lg"
-                        disabled={checkout.isPending}
-                        className={styles.placeOrderButton}
-                    >
-                        {checkout.isPending ? t('checkout_processing') : t('checkout_place_order')}
-                    </Button>
                 </aside>
-            </form>
+            </div>
         </div>
     );
 }

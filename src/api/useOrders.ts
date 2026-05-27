@@ -1,19 +1,18 @@
 /**
- * Customer order queries + checkout mutation.
+ * Customer order queries.
  *
- * Checkout creates a pending order. The backend clears the user's cart at
- * order creation (the order is now the source of truth for "what the user
- * is buying"; if they bail before paying they can resume from the order
- * detail page). We invalidate the cart query here so the navbar badge +
- * cart drawer reflect the empty cart immediately.
+ * Orders are created ONLY when a payment confirms (see `useCheckoutPay`). The
+ * durable pre-payment state is the cart, not a "pending" order — so the order
+ * list shows only real (paid) orders and there is no "resume payment from an
+ * order" concept. The cart is resumable from any device; the buyer just
+ * re-opens it and pays.
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
-import { CART_KEYS } from '@/api/useCart';
 import { API_ROUTES } from '@/constants/routes';
 import { api } from '@/lib/axios';
 import { useAuthStore } from '@/stores/useAuthStore';
-import type { OrderListItem, OrderDetail, CheckoutRequest } from '@/types/order';
+import type { OrderListItem, OrderDetail } from '@/types/order';
 import type { PaginatedResponse } from '@/types/product';
 
 const KEYS = {
@@ -46,22 +45,5 @@ export const useOrderDetail = (orderNumber: string) => {
             return data;
         },
         enabled: !!orderNumber,
-    });
-};
-
-export const useCheckout = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (checkoutData: CheckoutRequest) => {
-            const { data } = await api.post(API_ROUTES.checkout, checkoutData);
-            return data;
-        },
-        onSuccess: () => {
-            // Backend clears the cart at order creation now, so refresh both
-            // caches: orders so the new pending row shows up + the unpaid
-            // badge updates, and cart so the navbar drawer + badge zero out.
-            queryClient.invalidateQueries({ queryKey: KEYS.all });
-            queryClient.invalidateQueries({ queryKey: CART_KEYS.all });
-        },
     });
 };

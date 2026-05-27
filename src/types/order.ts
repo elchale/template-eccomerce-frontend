@@ -103,15 +103,6 @@ export interface OrderDetail extends OrderListItem {
     izipay_transaction_id?: string;
 }
 
-export interface CheckoutRequest {
-    shipping_address: string;
-    billing_address?: string;
-    email: string;
-    phone?: string;
-    notes?: string;
-    coupon_code?: string;
-}
-
 export interface Coupon {
     id: number;
     code: string;

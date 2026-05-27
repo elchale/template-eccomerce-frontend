@@ -40,7 +40,6 @@ import { VerifyEmail } from './pages/auth/VerifyEmail/VerifyEmail';
 import { CartPage } from './pages/CartPage/CartPage';
 import { CategoryPage } from './pages/CategoryPage/CategoryPage';
 import { CheckoutPage } from './pages/CheckoutPage/CheckoutPage';
-import { CheckoutPaymentPage } from './pages/CheckoutPaymentPage/CheckoutPaymentPage';
 import { Main } from './pages/Main/Main';
 import { NotFound } from './pages/NotFound/NotFound';
 import { OrderDetailPage } from './pages/OrderDetailPage/OrderDetailPage';
@@ -240,14 +239,6 @@ function AppInner() {
                             element={
                                 <ErrorBoundary>
                                     <CheckoutPage />
-                                </ErrorBoundary>
-                            }
-                        />
-                        <Route
-                            path={ROUTES.checkoutPay}
-                            element={
-                                <ErrorBoundary>
-                                    <CheckoutPaymentPage />
                                 </ErrorBoundary>
                             }
                         />

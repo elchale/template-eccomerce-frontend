@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useCart } from '@/api/useCart';
-import { useOrders } from '@/api/useOrders';
 import { Button, Spinner, LanguageSwitcher } from '@/components/ui';
 import { LOGO, PROJECT_NAME } from '@/constants/common';
 import { ROUTES } from '@/constants/routes';
@@ -48,17 +47,6 @@ export function Navbar() {
     const openCart = useCartStore((s) => s.openCart);
     const localItems = useCartStore((s) => s.localItems);
     const { data: cart } = useCart();
-
-    // Count of pending+unpaid orders for the bag-icon badge. We only need
-    // pagination's `count`, so cap the page size at 1 to keep the payload
-    // tiny — the response is cached for 30s by the default queryClient
-    // config, plenty for a top-of-page chrome element.
-    const { data: pendingOrdersData } = useOrders(
-        isLogged
-            ? { status: 'pending', payment_status: 'unpaid', limit: '1' }
-            : undefined,
-    );
-    const pendingOrdersCount = pendingOrdersData?.count ?? 0;
 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userDetails, setUserDetails] = useState<UserDetails | undefined>(undefined);
@@ -321,22 +309,11 @@ export function Navbar() {
 
                         {!!isLogged && (
                             <button
-                                className={`${styles.iconButton} ${styles.cartButton}`}
+                                className={styles.iconButton}
                                 onClick={() => navigate(ROUTES.orders)}
-                                aria-label={
-                                    pendingOrdersCount > 0
-                                        ? t('shop:nav_pending_orders_aria', {
-                                              count: pendingOrdersCount,
-                                          })
-                                        : t('nav_orders_aria')
-                                }
+                                aria-label={t('nav_orders_aria')}
                             >
                                 <Package size={20} />
-                                {pendingOrdersCount > 0 && (
-                                    <span className={styles.cartBadge}>
-                                        {pendingOrdersCount > 99 ? '99+' : pendingOrdersCount}
-                                    </span>
-                                )}
                             </button>
                         )}
 

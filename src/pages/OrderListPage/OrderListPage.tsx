@@ -30,9 +30,14 @@ export function OrderListPage() {
     const [page, setPage] = useState(1);
     const { t, i18n } = useTranslation('shop');
 
+    // Orders only exist once a payment is confirmed (order-on-payment model),
+    // so there are no "unpaid" orders to resume here — the cart is the durable
+    // pre-payment state. We still scope to paid so any legacy pending rows
+    // (created by the old create-order flow) never surface as actionable.
     const params = {
         limit: String(PAGINATION.DEFAULT_PAGE_SIZE),
         offset: String((page - 1) * PAGINATION.DEFAULT_PAGE_SIZE),
+        payment_status: 'paid',
     };
 
     const { data: ordersData, isLoading, error } = useOrders(params);
@@ -113,19 +118,6 @@ export function OrderListPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className={styles.actions}>
-                                                    {order.status === 'pending' &&
-                                                        order.payment_status === 'unpaid' && (
-                                                            <Link
-                                                                to={buildRoute.checkoutPay(
-                                                                    order.order_number,
-                                                                )}
-                                                                className={styles.actionLink}
-                                                            >
-                                                                <Button variant="primary" size="sm">
-                                                                    {t('orders_pay_now')}
-                                                                </Button>
-                                                            </Link>
-                                                        )}
                                                     <Link
                                                         to={buildRoute.orderDetail(
                                                             order.order_number,

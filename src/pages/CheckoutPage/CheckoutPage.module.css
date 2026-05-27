@@ -77,10 +77,53 @@
 }
 
 .cardTitle {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
     margin: 0;
     font-size: var(--text-lg);
     font-weight: 600;
     color: var(--color-text);
+}
+
+/* Payment states */
+.payState {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md) 0;
+}
+
+.payStateText {
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+}
+
+.payError {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-error-bg);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-md);
+}
+
+.payErrorText {
+    margin: 0;
+    font-size: var(--text-md);
+    color: var(--color-error);
+}
+
+.secureRow {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
 }
 
 .fieldGroup {

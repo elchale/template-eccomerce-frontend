@@ -223,7 +223,11 @@ export function CartPage() {
                         </div>
                     </div>
 
-                    <Link to={ROUTES.checkout} className={styles.checkoutLink}>
+                    <Link
+                        to={ROUTES.checkout}
+                        state={couponResult ? { couponCode: couponResult.code } : undefined}
+                        className={styles.checkoutLink}
+                    >
                         <Button variant="primary" size="lg" className={styles.checkoutButton}>
                             {t('cart_proceed_checkout')}
                         </Button>

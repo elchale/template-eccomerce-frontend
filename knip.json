@@ -19,8 +19,7 @@
     "src/lib/sanitize.ts",
     "src/lib/rateLimiter.ts",
     "src/lib/i18n.ts",
-    "src/lib/index.ts",
-    "src/pages/CheckoutPaymentPage/index.ts"
+    "src/lib/index.ts"
   ],
   "ignoreDependencies": ["@types/react-datepicker", "chart.js", "react-chartjs-2"],
   "ignoreExportsUsedInFile": true,

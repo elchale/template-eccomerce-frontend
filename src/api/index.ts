@@ -13,7 +13,7 @@ export {
     useClearCart,
     CART_KEYS,
 } from './useCart';
-export { useOrders, useOrderDetail, useCheckout, ORDER_KEYS } from './useOrders';
+export { useOrders, useOrderDetail, ORDER_KEYS } from './useOrders';
 export { useWishlist, useToggleWishlist, WISHLIST_KEYS } from './useWishlist';
 export { useProductReviews, useCreateReview, REVIEW_KEYS } from './useReviews';
 export {
@@ -74,7 +74,8 @@ export {
 
 export { useThemeSettings, THEME_KEYS } from './useThemeSettings';
 export {
-    useMercadoPagoProcess,
+    useCheckoutPay,
+    useCheckoutSessionStatus,
     useCulqiOrder,
     useCulqiCharge,
     useIzipayToken,
@@ -82,8 +83,10 @@ export {
     PAYMENT_KEYS,
 } from './usePayments';
 export type {
-    MercadoPagoProcessPayload,
-    MercadoPagoProcessResponse,
+    CheckoutPayPayload,
+    CheckoutPayResponse,
+    CheckoutThreeDs,
+    CheckoutSessionStatusResponse,
     CulqiOrderResponse,
     CulqiChargeResponse,
     VerifyPaymentPayload,

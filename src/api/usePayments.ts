@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { CART_KEYS } from '@/api/useCart';
 import { ORDER_KEYS } from '@/api/useOrders';
@@ -9,12 +9,37 @@ export const PAYMENT_KEYS = {
     all: ['payments'] as const,
 } as const;
 
-// ─── Mercado Pago (active gateway) ───────────────────────────────────────────
+// ─── Order-on-payment checkout (active flow) ─────────────────────────────────
+//
+// The order is created ONLY when the payment confirms. `POST /api/checkout/pay`
+// creates a CheckoutSession (a payment attempt against the durable cart), runs
+// the MP payment, and returns the order only once it exists. The cart stays
+// intact until an order is created (rejection, abandonment, etc.), so the buyer
+// can resume from the cart on any device.
 
-export interface MercadoPagoProcessPayload {
-    /** Django order number (preferred). */
-    orderNumber: string;
-    /** Card token produced by the MP Card Payment Brick. */
+/** 3DS challenge data — what the MP Status Screen Brick needs (no secrets). */
+export interface CheckoutThreeDs {
+    /** Bank ACS challenge URL — forwarded as `externalResourceURL` to the Brick. */
+    external_resource_url: string;
+    /** Challenge request token — forwarded as `creq` to the Brick. */
+    creq: string;
+}
+
+/** Card + contact payload for `POST /api/checkout/pay`. */
+export interface CheckoutPayPayload {
+    /** Assembled shipping address string. */
+    shippingAddress: string;
+    /** Optional billing address (omitted when same as shipping). */
+    billingAddress?: string | undefined;
+    /** Contact email. */
+    email: string;
+    /** Contact phone (optional). */
+    phone?: string | undefined;
+    /** Order notes (optional). */
+    notes?: string | undefined;
+    /** Applied coupon code (optional). */
+    couponCode?: string | undefined;
+    /** Short-lived card token produced by the MP Card Payment Brick. */
     token: string;
     /** Card brand (e.g. 'visa', 'master', 'amex'). */
     paymentMethodId: string;
@@ -33,87 +58,113 @@ export interface MercadoPagoProcessPayload {
 }
 
 /**
- * 3DS challenge payload returned by the backend on a `pending_challenge`
- * response (HTTP 200). It carries exactly what the MP Status Screen Brick
- * needs to render the bank challenge — no raw MP body, no secrets.
+ * Discriminated response from `POST /api/checkout/pay` (HTTP 200 for every
+ * branch except a hard rejection, which is a 402 with a safe `{detail, code}`
+ * body handled in the catch branch).
+ *
+ * - approved (`paid: true`) → the order now exists; navigate to `order_number`.
+ *   The backend spreads the full OrderDetail (which carries its own `status`
+ *   like "confirmed"), so success is discriminated by `paid === true`, NOT by
+ *   a `status: 'approved'` field.
+ * - `pending_challenge` → no order yet; mount the Status Screen Brick with
+ *   `three_ds`, then poll `session/<session_uuid>/status` for the outcome.
+ * - `pending` / `in_process` / `processing` → MP is reviewing or a payment is
+ *   already in flight; "te confirmaremos por correo".
  */
-export interface MercadoPagoThreeDs {
-    /** Bank ACS challenge URL — forwarded as `externalResourceURL` to the Brick. */
-    external_resource_url: string;
-    /** Challenge request token — forwarded as `creq` to the Brick. */
-    creq: string;
-}
+export type CheckoutPayResponse =
+    | {
+          /** Approved: the order exists. Backend also spreads OrderDetail. */
+          paid: true;
+          order_number: string;
+          session_uuid?: string;
+      }
+    | {
+          status: 'pending_challenge';
+          session_uuid: string;
+          three_ds: CheckoutThreeDs;
+          /** MP payment id — needed to mount the Status Screen Brick. */
+          payment_id?: string;
+      }
+    | {
+          status: 'pending' | 'in_process' | 'processing';
+          session_uuid: string;
+      };
 
 /**
- * Response from /api/payments/mercadopago/process/.
- *
- * - `approved` (paid=true) → existing success path.
- * - `pending_challenge` → mount the Status Screen Brick with `three_ds` data;
- *   the order stays unconfirmed until the challenge resolves (webhook is the
- *   source of truth).
- * - `in_process` / `pending` (other) → existing "confirm by email" path.
- * - rejected → 402 with a safe `{detail}` body (handled in the error branch).
+ * POST /api/checkout/pay — the single entry point for placing an order. It
+ * creates a payment against the durable cart and only materialises the order
+ * once the payment confirms. We invalidate cart + orders on every settle so
+ * the storefront reflects ground truth (an approved payment clears the cart
+ * server-side and creates the order).
  */
-export interface MercadoPagoProcessResponse {
-    paid: boolean;
-    order_number: string;
-    payment_id: string;
-    /**
-     * MP payment status — 'approved' | 'pending_challenge' | 'in_process'
-     * | 'pending' | other.
-     */
-    status: string;
-    /** Present only when status === 'pending_challenge'. */
-    three_ds?: MercadoPagoThreeDs;
-}
-
-/**
- * POST /api/payments/mercadopago/process/ → creates an MP payment for an
- * order using the Brick-produced card token. The MP API call is synchronous
- * and authoritative when status='approved'; status='in_process' means the
- * final outcome arrives later via the /pay webhook.
- *
- * On success the backend has already marked the order paid and cleared the
- * cart, so we invalidate both caches.
- */
-export const useMercadoPagoProcess = () => {
+export const useCheckoutPay = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({
-            orderNumber,
-            token,
-            paymentMethodId,
-            issuerId,
-            installments,
-            payerEmail,
-            payerIdType,
-            payerIdNumber,
-            deviceId,
-        }: MercadoPagoProcessPayload): Promise<MercadoPagoProcessResponse> => {
-            const { data } = await api.post<MercadoPagoProcessResponse>(
-                API_ROUTES.mercadopagoProcess,
-                {
-                    order_number: orderNumber,
-                    token,
-                    payment_method_id: paymentMethodId,
-                    issuer_id: issuerId,
-                    installments,
-                    device_id: deviceId,
-                    payer: {
-                        email: payerEmail,
-                        identification:
-                            payerIdType && payerIdNumber
-                                ? { type: payerIdType, number: payerIdNumber }
-                                : undefined,
-                    },
+        mutationFn: async (payload: CheckoutPayPayload): Promise<CheckoutPayResponse> => {
+            const { data } = await api.post<CheckoutPayResponse>(API_ROUTES.checkoutPay, {
+                shipping_address: payload.shippingAddress,
+                ...(payload.billingAddress
+                    ? { billing_address: payload.billingAddress }
+                    : {}),
+                email: payload.email,
+                ...(payload.phone ? { phone: payload.phone } : {}),
+                ...(payload.notes ? { notes: payload.notes } : {}),
+                ...(payload.couponCode ? { coupon_code: payload.couponCode } : {}),
+                token: payload.token,
+                payment_method_id: payload.paymentMethodId,
+                issuer_id: payload.issuerId,
+                installments: payload.installments,
+                device_id: payload.deviceId,
+                payer: {
+                    email: payload.payerEmail,
+                    identification:
+                        payload.payerIdType && payload.payerIdNumber
+                            ? { type: payload.payerIdType, number: payload.payerIdNumber }
+                            : undefined,
                 },
-            );
+            });
             return data;
         },
-        onSuccess: () => {
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ORDER_KEYS.all });
             queryClient.invalidateQueries({ queryKey: CART_KEYS.all });
         },
+    });
+};
+
+/** Status of a checkout session, polled after a 3DS challenge resolves. */
+export interface CheckoutSessionStatusResponse {
+    status: 'processing' | 'paid' | 'failed' | 'expired';
+    /** Present once the order exists (status === 'paid'). */
+    order_number?: string;
+}
+
+/**
+ * GET /api/checkout/session/<uuid>/status — single fetch of a session's
+ * current state. The challenge flow polls this via `refetchInterval` until the
+ * session reaches a terminal state (`paid` → order exists; `failed` → no order,
+ * cart intact). Disabled until a `uuid` and `enabled` flag are provided.
+ */
+export const useCheckoutSessionStatus = (uuid: string | null, enabled: boolean) => {
+    return useQuery({
+        queryKey: [...PAYMENT_KEYS.all, 'session', uuid] as const,
+        queryFn: async (): Promise<CheckoutSessionStatusResponse> => {
+            const { data } = await api.get<CheckoutSessionStatusResponse>(
+                API_ROUTES.checkoutSessionStatus(uuid!),
+            );
+            return data;
+        },
+        enabled: enabled && !!uuid,
+        // Poll while the session is still processing; stop once terminal.
+        refetchInterval: (query): number | false => {
+            const status = query.state.data?.status;
+            const terminal = status === 'paid' || status === 'failed' || status === 'expired';
+            return terminal ? false : 2500;
+        },
+        // Always hit the network — the session state changes server-side.
+        staleTime: 0,
+        gcTime: 0,
+        retry: false,
     });
 };
 
