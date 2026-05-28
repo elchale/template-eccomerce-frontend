@@ -1,6 +1,6 @@
 /* Two-column grid that collapses to single-column under 600px. The
  * `.full` modifier promotes a field to span both columns (used for the
- * country selector and the address lines). */
+ * assisted search, the map and the address lines). */
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -75,6 +75,64 @@
     color: var(--color-error);
 }
 
+/* ── Assisted search (the prominent, first thing the buyer sees) ───────── */
+
+/* A highlighted card so the assisted search visually leads the form. */
+.searchBlock {
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--color-primary-subtle);
+    border: var(--border-width-sm) solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.searchLabel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+/* Wraps the icon + input so the icon sits inside the field. */
+.searchWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.searchIcon {
+    position: absolute;
+    left: var(--spacing-md);
+    font-size: var(--text-lg);
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Larger search input with room for the leading icon. */
+.searchInput {
+    min-height: 52px;
+    padding-left: var(--spacing-3xl);
+    font-size: var(--text-lg);
+    background: var(--color-bg);
+}
+
+.searchHelp {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Separator caption introducing the editable detail fields below. */
+.detailsHint {
+    margin: var(--spacing-xs) 0 0;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
 /* Short instruction shown above the confirmation map. */
 .mapHint {
     margin: 0;
@@ -90,6 +148,31 @@
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--color-bg-subtle);
+}
+
+/* Resolved-address confirmation shown right under the map so the buyer
+ * can read back exactly what was matched to the pin. */
+.confirmBox {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+    margin-top: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-success-bg);
+    border: var(--border-width-sm) solid var(--color-success);
+    border-radius: var(--radius-md);
+}
+
+.confirmIcon {
+    flex-shrink: 0;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--color-success);
+}
+
+.confirmText {
+    font-size: var(--text-md);
+    color: var(--color-text);
 }
 
 /* Keeps the map block out of the layout (and out of the a11y tree) until

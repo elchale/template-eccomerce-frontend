@@ -158,6 +158,11 @@
   "category_no_products_title": "Sin productos",
   "category_no_products_message": "No hay productos en esta categoría aún. Prueba ajustando los filtros.",
 
+  "address_search_label": "Busca tu dirección",
+  "address_search_placeholder": "Empieza a escribir tu calle y elige una opción",
+  "address_search_help": "Elige una sugerencia y completaremos tu dirección y el mapa por ti.",
+  "address_search_loading": "Cargando el buscador de direcciones...",
+  "address_details_hint": "Revisa y corrige los datos de tu dirección si es necesario.",
   "address_country": "País",
   "address_recipient": "Nombre del destinatario",
   "address_recipient_placeholder": "Escribe el nombre de quien recibe",

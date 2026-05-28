@@ -102,6 +102,8 @@ function countryLabelForCode(code: string): string {
 
 /** Default map center (Lima, Perú) when no pin has been dropped yet. */
 const DEFAULT_CENTER = { lat: -12.0464, lng: -77.0428 };
+/** Bias box for Peru so suggestions surface fast (whole-country bounds). */
+const PE_BOUNDS = { south: -18.4, west: -81.4, north: -0.04, east: -68.6 };
 const PIN_ZOOM = 16;
 const OVERVIEW_ZOOM = 12;
 
@@ -113,35 +115,43 @@ interface AddressPickerProps {
 }
 
 /**
- * Multi-field address input modelled on Temu's flow:
- *   1. Country selector. Drives whether `Departamento` becomes a dropdown
- *      (PE only) or a free-text input.
- *   2. Recipient name + phone (top of the card — usually the first thing
- *      a buyer needs to confirm).
- *   3. A single address line with Google Places autocomplete when
- *      `VITE_GOOGLE_MAPS_API_KEY` is configured. The autocomplete result
- *      back-fills `addressLine1` and best-effort `distrito` / `provincia`
- *      / `departamento` / `postalCode`, AND drops the confirmation pin.
- *      If the env var is missing the input degrades to a normal text field
- *      and the map is simply not rendered — no error, no warning.
- *   4. Address line 2 (apt / floor / cross-street).
- *   5. Distrito + Provincia + Departamento + Postal code.
- *   6. A visual confirmation map with a DRAGGABLE pin. The pin is the
- *      source of truth the buyer confirms: dragging it reverse-geocodes the
- *      new point and refreshes distrito / provincia / departamento /
- *      postalCode so the form always matches the pin.
+ * Address input with an assisted-search-first flow.
+ *
+ * Field order (top → bottom):
+ *   1. A PROMINENT Google Places search ("Busca tu dirección") at the very
+ *      top. Typing shows Google's suggestion dropdown; clicking ONE
+ *      suggestion fills `addressLine1` + distrito / provincia / departamento
+ *      / postalCode AND drops/centers the confirmation pin. Restricted +
+ *      biased to the selected country (PE by default) for fast, relevant
+ *      results. If `VITE_GOOGLE_MAPS_API_KEY` is missing the search box is
+ *      hidden entirely and the manual fields below work as a plain form —
+ *      graceful degrade, no errors.
+ *   2. The confirmation MAP with a DRAGGABLE pin + the resolved formatted
+ *      address text, so the buyer can visually confirm "this is my address"
+ *      and fine-tune the exact point (dragging reverse-geocodes).
+ *   3. Country selector (default Perú/PE, changeable). Drives whether
+ *      `Departamento` is a dropdown (PE) or free text, and the search
+ *      restriction/bias.
+ *   4. Recipient name + phone.
+ *   5. Manual detail fields (address line 1/2, distrito, provincia,
+ *      departamento, postal code) — kept editable below for corrections.
  *
  * The component is controlled. Parents own the state; we just call
- * `onChange` with a fresh `AddressFields` whenever any field updates,
- * and `formatAddressForBackend(value)` produces the string the backend
- * still expects.
+ * `onChange` with a fresh `AddressFields` whenever any field updates, and
+ * `formatAddressForBackend(value)` produces the string the backend expects.
  */
 export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     const { t } = useTranslation('shop');
-    const lineRef = useRef<HTMLInputElement>(null);
+    const searchRef = useRef<HTMLInputElement>(null);
     const mapElRef = useRef<HTMLDivElement>(null);
-    const [autocompleteReady, setAutocompleteReady] = useState(false);
+    const [searchReady, setSearchReady] = useState(false);
     const [mapReady, setMapReady] = useState(false);
+    // True only when a Maps API key is configured. Drives whether the whole
+    // assisted block (search + map) participates in layout at all.
+    const [mapsEnabled, setMapsEnabled] = useState(false);
+    const [sdkLoading, setSdkLoading] = useState(true);
+    // Human-readable formatted address Google resolved for the current pin.
+    const [resolvedAddress, setResolvedAddress] = useState('');
 
     // Live Google objects. Held in refs because they outlive renders and we
     // mutate them imperatively (center, marker position, geocode).
@@ -188,6 +198,8 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 : [partsByType['route'], partsByType['street_number']].filter(Boolean).join(' ') ||
                   formatted ||
                   current.addressLine1;
+
+            if (formatted) setResolvedAddress(formatted);
 
             onChangeRef.current({
                 ...current,
@@ -266,10 +278,21 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
         let clickListener: google.maps.MapsEventListener | null = null;
 
         loadGoogleMaps().then((maps) => {
-            if (cancelled || !maps || !lineRef.current) return;
+            if (cancelled) return;
+            if (!maps) {
+                // No API key / load failure — graceful degrade. Hide the
+                // assisted block; the manual fields below remain fully usable.
+                setSdkLoading(false);
+                return;
+            }
+            if (!searchRef.current) {
+                setSdkLoading(false);
+                return;
+            }
 
             mapsRef.current = maps;
             geocoderRef.current = new maps.Geocoder();
+            setMapsEnabled(true);
 
             // --- Map + draggable pin -------------------------------------
             if (mapElRef.current && !mapRef.current) {
@@ -291,7 +314,16 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     gestureHandling: 'cooperative',
                 });
 
-                if (hasPin) placePin(start);
+                if (hasPin) {
+                    placePin(start);
+                    // Best-effort: resolve text for a pin that arrived via
+                    // restored form state so the confirm line isn't blank.
+                    geocoderRef.current.geocode({ location: start }, (results, status) => {
+                        if (!cancelled && status === 'OK' && results?.[0]) {
+                            setResolvedAddress(results[0].formatted_address);
+                        }
+                    });
+                }
 
                 // Let the buyer tap anywhere on the map to move the pin too.
                 clickListener = mapRef.current.addListener('click', (e: google.maps.MapMouseEvent) => {
@@ -304,13 +336,15 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 if (!cancelled) setMapReady(true);
             }
 
-            // --- Places autocomplete -------------------------------------
+            // --- Places autocomplete (the prominent top search) ----------
             const restrictions =
                 value.country === 'OTHER' ? undefined : { country: value.country.toLowerCase() };
-            autocomplete = new maps.places.Autocomplete(lineRef.current, {
+            autocomplete = new maps.places.Autocomplete(searchRef.current, {
                 fields: ['address_components', 'formatted_address', 'geometry'],
                 types: ['address'],
                 ...(restrictions && { componentRestrictions: restrictions }),
+                // Bias toward Peru's bounds for faster, more relevant hits.
+                ...(value.country === 'PE' && { bounds: PE_BOUNDS }),
             });
 
             listener = autocomplete.addListener('place_changed', () => {
@@ -332,9 +366,17 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                         place.formatted_address,
                     );
                 }
+
+                // Clear the search box after a pick: the chosen address now
+                // lives in the detail fields + the map confirm line, and an
+                // empty search invites another lookup if needed.
+                if (searchRef.current) searchRef.current.value = '';
             });
 
-            if (!cancelled) setAutocompleteReady(true);
+            if (!cancelled) {
+                setSearchReady(true);
+                setSdkLoading(false);
+            }
         });
 
         return () => {
@@ -371,10 +413,100 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     );
 
     const hasPin = typeof value.lat === 'number' && typeof value.lng === 'number';
+    // The confirm text near the map: prefer Google's formatted string, else
+    // fall back to the pieces the buyer has entered.
+    const confirmText =
+        resolvedAddress ||
+        [value.addressLine1, value.distrito, value.provincia, value.departamento]
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .join(', ');
 
     return (
         <div className={styles.grid}>
-            {/* Country */}
+            {/*
+                Assisted search FIRST. Only rendered when the Maps SDK is
+                configured. While the SDK loads we show a disabled, loading
+                placeholder so the field doesn't pop in. With no API key the
+                whole block is omitted (graceful degrade) and the buyer uses
+                the manual detail fields below.
+            */}
+            {sdkLoading ? (
+                <div className={`${styles.field} ${styles.full} ${styles.searchBlock}`}>
+                    <label className={styles.searchLabel} htmlFor="addr-search">
+                        {t('address_search_label')}
+                    </label>
+                    <div className={styles.searchWrap}>
+                        <span className={styles.searchIcon} aria-hidden="true">
+                            📍
+                        </span>
+                        <input
+                            id="addr-search"
+                            className={`${styles.input} ${styles.searchInput}`}
+                            type="text"
+                            disabled
+                            placeholder={t('address_search_loading')}
+                            aria-busy="true"
+                        />
+                    </div>
+                </div>
+            ) : mapsEnabled ? (
+                <div className={`${styles.field} ${styles.full} ${styles.searchBlock}`}>
+                    <label className={styles.searchLabel} htmlFor="addr-search">
+                        {t('address_search_label')}
+                        {searchReady ? (
+                            <span className={styles.assistTag}>{t('address_autocomplete_hint')}</span>
+                        ) : null}
+                    </label>
+                    <div className={styles.searchWrap}>
+                        <span className={styles.searchIcon} aria-hidden="true">
+                            📍
+                        </span>
+                        <input
+                            id="addr-search"
+                            ref={searchRef}
+                            className={`${styles.input} ${styles.searchInput}`}
+                            type="text"
+                            placeholder={t('address_search_placeholder')}
+                            autoComplete="off"
+                            aria-label={t('address_search_label')}
+                        />
+                    </div>
+                    <p className={styles.searchHelp}>{t('address_search_help')}</p>
+                </div>
+            ) : null}
+
+            {/*
+                Visual confirmation map. Only rendered when the Maps SDK is
+                configured (mapReady). With no API key the loader resolves to
+                null, this block stays hidden, and the form works exactly as
+                before — graceful degrade, no errors.
+            */}
+            <div className={`${styles.field} ${styles.full} ${mapReady ? '' : styles.hidden}`}>
+                <label className={styles.label} htmlFor="addr-map">
+                    {t('address_map_label')}
+                </label>
+                <p className={styles.mapHint}>
+                    {hasPin ? t('address_map_hint_drag') : t('address_map_hint_search')}
+                </p>
+                <div
+                    id="addr-map"
+                    ref={mapElRef}
+                    className={styles.map}
+                    role="application"
+                    aria-label={t('address_map_label')}
+                />
+                {hasPin && confirmText ? (
+                    <div className={styles.confirmBox}>
+                        <span className={styles.confirmIcon} aria-hidden="true">
+                            ✓
+                        </span>
+                        <span className={styles.confirmText}>{confirmText}</span>
+                    </div>
+                ) : null}
+            </div>
+
+            {/* Country (after the assisted search; defaults to Perú) */}
             <div className={`${styles.field} ${styles.full}`}>
                 <label className={styles.label} htmlFor="addr-country">
                     {t('address_country')}
@@ -430,18 +562,17 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 {renderError('phone')}
             </div>
 
-            {/* Address line 1 + Google Places autocomplete */}
+            {/* Manual detail fields (for corrections after the assisted pick) */}
+            <p className={`${styles.full} ${styles.detailsHint}`}>{t('address_details_hint')}</p>
+
+            {/* Address line 1 */}
             <div className={`${styles.field} ${styles.full}`}>
                 <label className={styles.label} htmlFor="addr-line1">
                     {t('address_line1')}
                     {requiredMark}
-                    {autocompleteReady && (
-                        <span className={styles.assistTag}>{t('address_autocomplete_hint')}</span>
-                    )}
                 </label>
                 <input
                     id="addr-line1"
-                    ref={lineRef}
                     className={styles.input}
                     type="text"
                     value={value.addressLine1}
@@ -553,28 +684,6 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     inputMode="numeric"
                 />
                 {renderError('postalCode')}
-            </div>
-
-            {/*
-                Visual confirmation map. Only rendered when the Maps SDK is
-                configured (mapReady). With no API key the loader resolves to
-                null, this block stays hidden, and the form works exactly as
-                before — graceful degrade, no errors.
-            */}
-            <div className={`${styles.field} ${styles.full} ${mapReady ? '' : styles.hidden}`}>
-                <label className={styles.label} htmlFor="addr-map">
-                    {t('address_map_label')}
-                </label>
-                <p className={styles.mapHint}>
-                    {hasPin ? t('address_map_hint_drag') : t('address_map_hint_search')}
-                </p>
-                <div
-                    id="addr-map"
-                    ref={mapElRef}
-                    className={styles.map}
-                    role="application"
-                    aria-label={t('address_map_label')}
-                />
             </div>
         </div>
     );

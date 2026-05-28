@@ -167,6 +167,9 @@ declare global {
                     fields?: string[];
                     types?: string[];
                     componentRestrictions?: { country: string | string[] };
+                    // A LatLngBoundsLiteral that biases (not restricts)
+                    // suggestions toward a geographic box.
+                    bounds?: { north: number; south: number; east: number; west: number };
                 }
                 interface PlaceResult {
                     formatted_address?: string;
