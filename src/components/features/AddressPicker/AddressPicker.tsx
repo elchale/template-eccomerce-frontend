@@ -1,3 +1,4 @@
+import { Check, MapPin } from '@phosphor-icons/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -584,9 +585,12 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     ) : null}
                 </label>
                 <div className={styles.addressWrap}>
-                    <span className={styles.addressIcon} aria-hidden="true">
-                        📍
-                    </span>
+                    <MapPin
+                        size={20}
+                        weight="bold"
+                        className={styles.addressIcon}
+                        aria-hidden="true"
+                    />
                     <input
                         id="addr-line1"
                         className={`${styles.input} ${styles.addressInput}`}
@@ -660,9 +664,12 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 />
                 {hasPin && confirmText ? (
                     <div className={styles.confirmBox}>
-                        <span className={styles.confirmIcon} aria-hidden="true">
-                            ✓
-                        </span>
+                        <Check
+                            size={16}
+                            weight="bold"
+                            className={styles.confirmIcon}
+                            aria-hidden="true"
+                        />
                         <span className={styles.confirmText}>{confirmText}</span>
                     </div>
                 ) : null}
