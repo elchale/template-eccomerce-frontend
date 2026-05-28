@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { ROUTES, buildRoute } from '../constants/routes';
+import { API_ROUTES, ROUTES, buildRoute } from '../constants/routes';
 
 /**
  * Route-consistency guardrail.
@@ -87,5 +87,35 @@ describe('route consistency: ROUTES dict <-> App.tsx router', () => {
         expect(buildRoute.adminMarketingPromoEdit(1)).toMatch(/^\//);
         expect(buildRoute.adminMarketingBannerEdit(1)).toMatch(/^\//);
         expect(buildRoute.adminMarketingPopupEdit(1)).toMatch(/^\//);
+    });
+});
+
+/**
+ * Django convention: every API path ends with `/`. APPEND_SLASH=True turns a
+ * slash-less POST into a 301 redirect, which browsers follow as a GET — and
+ * the backend then rejects with 405. Caused a silent prod outage on the
+ * checkout/pay endpoint once; never again. This test enforces the convention
+ * across every API_ROUTES entry (both string literals and URL builders).
+ */
+describe('API_ROUTES: trailing-slash invariant (Django APPEND_SLASH)', () => {
+    const STRING_ENTRIES = Object.entries(API_ROUTES).filter(
+        ([, v]) => typeof v === 'string',
+    ) as [string, string][];
+
+    const FUNCTION_ENTRIES = Object.entries(API_ROUTES).filter(
+        ([, v]) => typeof v === 'function',
+    ) as [string, (...args: unknown[]) => string][];
+
+    it.each(STRING_ENTRIES)('API_ROUTES.%s starts and ends with /', (_key, value) => {
+        expect(value.startsWith('/')).toBe(true);
+        expect(value.endsWith('/')).toBe(true);
+    });
+
+    it.each(FUNCTION_ENTRIES)('API_ROUTES.%s(...) starts and ends with /', (_key, fn) => {
+        // Call with safe stand-ins that work for both string and number params.
+        const sample = fn('sample-token-123' as never);
+        expect(typeof sample).toBe('string');
+        expect(sample.startsWith('/')).toBe(true);
+        expect(sample.endsWith('/')).toBe(true);
     });
 });
