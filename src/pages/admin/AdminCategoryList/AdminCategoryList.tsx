@@ -54,6 +54,9 @@ export function AdminCategoryList() {
     const updateCategory = useAdminUpdateCategory();
     const deleteCategory = useAdminDeleteCategory();
     const { t } = useTranslation('admin');
+    // Namespace-agnostic translator for resolving zod's `ns:key` messages on the
+    // slug field, which is rendered via a raw Controller + Input (not FormInput).
+    const { t: tGlobal } = useTranslation();
 
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -71,7 +74,6 @@ export function AdminCategoryList() {
         setValue,
         setError,
         getValues,
-        formState: { errors },
     } = useForm<CategoryFormInput, unknown, CategoryFormValues>({
         resolver: zodResolver(categorySchema),
         defaultValues: INITIAL_CATEGORY_FORM,
@@ -219,12 +221,6 @@ export function AdminCategoryList() {
 
     const isPending = createCategory.isPending || updateCategory.isPending;
 
-    const fieldError = (key: keyof CategoryFormInput): string | undefined => {
-        const e = errors[key];
-        if (!e?.message) return undefined;
-        return e.type === 'server' ? String(e.message) : t(String(e.message));
-    };
-
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -282,7 +278,7 @@ export function AdminCategoryList() {
                                 <FormInput
                                     control={control}
                                     name="name"
-                                    label={fieldError('name') ?? t('categories_name_es')}
+                                    label={t('categories_name_es')}
                                     placeholder={t('categories_name_placeholder')}
                                     isRequired
                                 />
@@ -310,7 +306,7 @@ export function AdminCategoryList() {
                                     const resolvedError = fieldState.error?.message
                                         ? fieldState.error.type === 'server'
                                             ? String(fieldState.error.message)
-                                            : t(String(fieldState.error.message))
+                                            : tGlobal(String(fieldState.error.message))
                                         : undefined;
                                     return (
                                         <Input

@@ -54,7 +54,6 @@ export function AdminPopupForm() {
         setValue,
         setError,
         reset,
-        formState: { errors },
     } = useForm<PopupFormInput, unknown, PopupFormValues>({
         resolver: zodResolver(popupSchema),
         defaultValues: INITIAL_POPUP_FORM,
@@ -197,12 +196,6 @@ export function AdminPopupForm() {
 
     const isPending = create.isPending || update.isPending;
 
-    const fieldError = (key: keyof PopupFormInput): string | undefined => {
-        const e = errors[key];
-        if (!e?.message) return undefined;
-        return e.type === 'server' ? String(e.message) : t(String(e.message));
-    };
-
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>
@@ -213,7 +206,7 @@ export function AdminPopupForm() {
                 <FormInput
                     control={control}
                     name="nombre"
-                    label={fieldError('nombre') ?? `${t('popup_form_internal_name')} *`}
+                    label={t('popup_form_internal_name')}
                     isRequired
                 />
 
@@ -246,7 +239,7 @@ export function AdminPopupForm() {
                         <FormInput
                             control={control}
                             name="titulo_es"
-                            label={fieldError('titulo_es') ?? `${t('popup_form_titulo_es')} *`}
+                            label={t('popup_form_titulo_es')}
                             isRequired
                         />
                         <FormInput

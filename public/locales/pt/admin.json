@@ -244,6 +244,8 @@
   "coupons_new_title": "Novo Cupom",
   "coupons_code": "Código",
   "coupons_code_placeholder": "ex. SAVE20",
+  "coupons_code_required": "O código é obrigatório",
+  "coupons_value_required": "O valor do desconto é obrigatório",
   "coupons_description": "Descrição",
   "coupons_description_placeholder": "Descrição do cupom",
   "coupons_discount_type": "Tipo de Desconto",

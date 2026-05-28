@@ -1,15 +1,17 @@
 /**
- * Zod schemas for admin forms. Validation messages are i18n keys resolved by
- * the consumer page via `t(message)` at error-render time. Server-side validation
- * errors come back as already-translated strings via RHF's `setError(field, { type: 'server' })`.
+ * Zod schemas for admin forms. Validation messages are namespace-qualified i18n
+ * keys (`admin:<key>`) resolved by `FormInput` via i18next's namespace-agnostic
+ * `t` at error-render time. Server-side validation errors come back as
+ * already-translated strings via RHF's `setError(field, { type: 'server' })` —
+ * i18next returns those verbatim since they aren't known keys.
  */
 import { z } from 'zod';
 
 // ─── Banner ─────────────────────────────────────────────────────────────────
 export const bannerSchema = z.object({
-    nombre: z.string().min(1, { message: 'banner_form_required' }),
+    nombre: z.string().min(1, { message: 'admin:banner_form_required' }),
     tipo: z.enum(['hero', 'anuncio', 'categoria']),
-    titulo_es: z.string().min(1, { message: 'banner_form_required' }),
+    titulo_es: z.string().min(1, { message: 'admin:banner_form_required' }),
     titulo_en: z.string(),
     titulo_pt: z.string(),
     subtitulo_es: z.string(),
@@ -32,9 +34,9 @@ export type BannerFormValues = z.infer<typeof bannerSchema>;
 
 // ─── Popup ──────────────────────────────────────────────────────────────────
 export const popupSchema = z.object({
-    nombre: z.string().min(1, { message: 'popup_form_required' }),
+    nombre: z.string().min(1, { message: 'admin:popup_form_required' }),
     tipo: z.enum(['bienvenida', 'abandono_carrito', 'intencion_salida', 'suscripcion']),
-    titulo_es: z.string().min(1, { message: 'popup_form_required' }),
+    titulo_es: z.string().min(1, { message: 'admin:popup_form_required' }),
     titulo_en: z.string(),
     titulo_pt: z.string(),
     mensaje_es: z.string(),
@@ -56,11 +58,11 @@ export type PopupFormValues = z.infer<typeof popupSchema>;
 
 // ─── Promo ──────────────────────────────────────────────────────────────────
 export const promoSchema = z.object({
-    nombre_es: z.string().min(1, { message: 'promo_form_required' }),
+    nombre_es: z.string().min(1, { message: 'admin:promo_form_required' }),
     nombre_en: z.string(),
     nombre_pt: z.string(),
     tipo: z.enum(['porcentaje', 'monto_fijo', 'compra_x_lleva_y']),
-    valor_descuento: z.string().min(1, { message: 'promo_form_required' }),
+    valor_descuento: z.string().min(1, { message: 'admin:promo_form_required' }),
     aplica_a_todo: z.boolean(),
     es_flash_sale: z.boolean(),
     fecha_inicio: z.string(),
@@ -70,10 +72,10 @@ export type PromoFormValues = z.infer<typeof promoSchema>;
 
 // ─── Category ───────────────────────────────────────────────────────────────
 export const categorySchema = z.object({
-    name: z.string().min(1, { message: 'categories_required_fields' }),
+    name: z.string().min(1, { message: 'admin:categories_required_fields' }),
     name_en: z.string(),
     name_pt: z.string(),
-    slug: z.string().min(1, { message: 'categories_required_fields' }),
+    slug: z.string().min(1, { message: 'admin:categories_required_fields' }),
     description: z.string(),
     parent: z.string(), // raw select value; '' = no parent
     sort_order: z.string(), // raw input; coerced on submit
@@ -83,10 +85,10 @@ export type CategoryFormValues = z.infer<typeof categorySchema>;
 
 // ─── Coupon ─────────────────────────────────────────────────────────────────
 export const couponSchema = z.object({
-    code: z.string().min(1, { message: 'coupons_code_required' }),
+    code: z.string().min(1, { message: 'admin:coupons_code_required' }),
     description: z.string(),
     discount_type: z.enum(['percentage', 'fixed']),
-    discount_value: z.string().min(1, { message: 'coupons_value_required' }),
+    discount_value: z.string().min(1, { message: 'admin:coupons_value_required' }),
     min_purchase_amount: z.string(),
     max_discount_amount: z.string(),
     usage_limit: z.string(),

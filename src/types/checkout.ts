@@ -1,15 +1,17 @@
 import { z } from 'zod';
 
 /**
- * Checkout form schema. Backend zod messages are i18n keys — the page resolves
- * them via `t(key)` at render time. Server-side validation errors come back as
- * already-translated strings and are surfaced via RHF's `setError(field, { type: 'server' })`.
+ * Checkout form schema. Validation messages are namespace-qualified i18n keys
+ * (`shop:<key>`); `FormInput` resolves them via i18next's namespace-agnostic `t`
+ * at error-render time. Server-side validation errors come back as
+ * already-translated strings and are surfaced via RHF's `setError(field, { type: 'server' })`
+ * — they are not i18n keys, so i18next returns them verbatim.
  */
 export const checkoutSchema = z
     .object({
-        email: z.string().email({ message: 'checkout_email_invalid' }),
+        email: z.string().email({ message: 'shop:checkout_email_invalid' }),
         phone: z.string().optional().or(z.literal('')),
-        shippingAddress: z.string().min(1, { message: 'checkout_shipping_required' }),
+        shippingAddress: z.string().min(1, { message: 'shop:checkout_shipping_required' }),
         sameAsShipping: z.boolean(),
         billingAddress: z.string().optional().or(z.literal('')),
         notes: z.string().optional().or(z.literal('')),
@@ -17,7 +19,7 @@ export const checkoutSchema = z
     .refine(
         (data) =>
             data.sameAsShipping || (data.billingAddress && data.billingAddress.trim().length > 0),
-        { message: 'checkout_billing_required', path: ['billingAddress'] },
+        { message: 'shop:checkout_billing_required', path: ['billingAddress'] },
     );
 
 export type CheckoutFormValues = z.infer<typeof checkoutSchema>;

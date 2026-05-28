@@ -57,7 +57,6 @@ export function AdminBannerForm() {
         setValue,
         setError,
         reset,
-        formState: { errors },
     } = useForm<BannerFormInput, unknown, BannerFormValues>({
         resolver: zodResolver(bannerSchema),
         defaultValues: INITIAL_BANNER_FORM,
@@ -204,14 +203,6 @@ export function AdminBannerForm() {
 
     const isPending = create.isPending || update.isPending;
 
-    // Resolve zod's translation keys to display strings, but render server
-    // messages (already translated) verbatim.
-    const fieldError = (key: keyof BannerFormInput): string | undefined => {
-        const e = errors[key];
-        if (!e?.message) return undefined;
-        return e.type === 'server' ? String(e.message) : t(String(e.message));
-    };
-
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>
@@ -222,7 +213,7 @@ export function AdminBannerForm() {
                 <FormInput
                     control={control}
                     name="nombre"
-                    label={fieldError('nombre') ?? `${t('banner_form_internal_name')} *`}
+                    label={t('banner_form_internal_name')}
                     isRequired
                 />
 
@@ -254,7 +245,7 @@ export function AdminBannerForm() {
                         <FormInput
                             control={control}
                             name="titulo_es"
-                            label={fieldError('titulo_es') ?? `${t('banner_form_titulo_es')} *`}
+                            label={t('banner_form_titulo_es')}
                             isRequired
                         />
                         <FormInput

@@ -46,7 +46,6 @@ export function AdminPromoForm() {
         handleSubmit,
         setError,
         reset,
-        formState: { errors },
     } = useForm<PromoFormInput, unknown, PromoFormValues>({
         resolver: zodResolver(promoSchema),
         defaultValues: INITIAL_PROMO_FORM,
@@ -140,12 +139,6 @@ export function AdminPromoForm() {
 
     const isPending = create.isPending || update.isPending;
 
-    const fieldError = (key: keyof PromoFormInput): string | undefined => {
-        const e = errors[key];
-        if (!e?.message) return undefined;
-        return e.type === 'server' ? String(e.message) : t(String(e.message));
-    };
-
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>
@@ -171,7 +164,7 @@ export function AdminPromoForm() {
                     <FormInput
                         control={control}
                         name="nombre_es"
-                        label={fieldError('nombre_es') ?? `${t('promo_form_nombre_es')} *`}
+                        label={t('promo_form_nombre_es')}
                         isRequired
                     />
                 )}
@@ -202,7 +195,7 @@ export function AdminPromoForm() {
                 <FormInput
                     control={control}
                     name="valor_descuento"
-                    label={fieldError('valor_descuento') ?? `${t('promo_form_discount_value')} *`}
+                    label={t('promo_form_discount_value')}
                     isRequired
                 />
 

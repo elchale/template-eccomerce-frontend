@@ -244,6 +244,8 @@
   "coupons_new_title": "New Coupon",
   "coupons_code": "Code",
   "coupons_code_placeholder": "e.g. SAVE20",
+  "coupons_code_required": "Code is required",
+  "coupons_value_required": "Discount value is required",
   "coupons_description": "Description",
   "coupons_description_placeholder": "Coupon description",
   "coupons_discount_type": "Discount Type",

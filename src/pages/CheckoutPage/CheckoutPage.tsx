@@ -79,6 +79,9 @@ export function CheckoutPage() {
     const getUser = useAuthStore((s) => s.getUser);
     const user = getUser();
     const { t } = useTranslation('shop');
+    // Namespace-agnostic translator for resolving zod's `ns:key` messages on the
+    // address field (which is not a FormInput, so it can't self-translate).
+    const { t: tGlobal } = useTranslation();
 
     const { data: cart, isLoading: cartLoading } = useCart();
     const pay = useCheckoutPay();
@@ -325,11 +328,15 @@ export function CheckoutPage() {
     const subtotal = Number.parseFloat(cart.subtotal);
     const total = subtotal;
 
-    // Resolve zod's translation keys to display strings.
+    // Resolve a field's error to a display string. Only used for the address
+    // field, which is rendered via AddressPicker + a hidden input (not a
+    // FormInput, so it can't self-translate). FormInput fields translate their
+    // own errors. zod messages are namespace-qualified keys (`shop:...`);
+    // server messages are already-translated strings and pass through.
     const fieldError = (key: keyof CheckoutFormValues): string | undefined => {
         const e = errors[key];
         if (!e?.message) return undefined;
-        return e.type === 'server' ? String(e.message) : t(String(e.message));
+        return e.type === 'server' ? String(e.message) : tGlobal(String(e.message));
     };
 
     // Read-only address recap shown on the payment step.
@@ -400,7 +407,7 @@ export function CheckoutPage() {
                                     <FormInput
                                         control={control}
                                         name="email"
-                                        label={fieldError('email') ?? t('checkout_email')}
+                                        label={t('checkout_email')}
                                         placeholder={t('checkout_email_placeholder')}
                                         isRequired
                                         type="email"
@@ -437,10 +444,7 @@ export function CheckoutPage() {
                                     <FormInput
                                         control={control}
                                         name="billingAddress"
-                                        label={
-                                            fieldError('billingAddress') ??
-                                            t('checkout_billing_address')
-                                        }
+                                        label={t('checkout_billing_address')}
                                         placeholder={t('checkout_billing_address_placeholder')}
                                         multiline
                                         rows={3}
@@ -453,7 +457,7 @@ export function CheckoutPage() {
                                 <FormInput
                                     control={control}
                                     name="notes"
-                                    label={fieldError('notes') ?? t('checkout_notes_label')}
+                                    label={t('checkout_notes_label')}
                                     placeholder={t('checkout_notes_placeholder')}
                                     multiline
                                     rows={3}
