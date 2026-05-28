@@ -47,10 +47,35 @@ export function loadGoogleMaps(): Promise<GoogleMapsNamespace | null> {
 
     inflight = new Promise<GoogleMapsNamespace | null>((resolve) => {
         const script = document.createElement('script');
+        // `loading=async` enables the modern async bootstrap. We still pass
+        // libraries via the URL for back-compat, but we ALSO call
+        // `importLibrary` explicitly below — the new Places API
+        // (AutocompleteSuggestion, Place) is only attached to the namespace
+        // after that import resolves. Without it, `google.maps.places` exists
+        // but `AutocompleteSuggestion`/`Place` are `undefined`, our
+        // `mapsEnabled` flag stays false, and the picker silently degrades.
         script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places,marker&loading=async`;
         script.async = true;
         script.defer = true;
-        script.onload = () => {
+        script.onload = async () => {
+            const maps = window.google?.maps;
+            if (!maps) {
+                resolve(null);
+                return;
+            }
+            // Make sure the new Places API + marker library are actually
+            // attached. Wrapped in try/catch so a single failing library
+            // never breaks the whole resolution (the AddressPicker degrades
+            // gracefully when these aren't there).
+            try {
+                if (typeof maps.importLibrary === 'function') {
+                    await maps.importLibrary('places');
+                    await maps.importLibrary('marker');
+                }
+            } catch {
+                // Library import failed — fall through and let callers
+                // detect the missing classes via their own runtime checks.
+            }
             if (window.google?.maps?.places) {
                 resolve(window.google.maps);
             } else {
@@ -84,6 +109,12 @@ declare global {
                 function removeListener(listener: MapsEventListener): void;
                 function clearInstanceListeners(instance: object): void;
             }
+
+            // The async bootstrap exposes `importLibrary` once Maps JS has
+            // loaded. We use it to force the new Places API
+            // (AutocompleteSuggestion, Place) and the new marker library to
+            // actually attach to the namespace before resolving the loader.
+            function importLibrary(name: string): Promise<unknown>;
 
             interface LatLngLiteral {
                 lat: number;
