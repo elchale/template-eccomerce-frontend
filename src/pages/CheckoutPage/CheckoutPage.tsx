@@ -379,7 +379,7 @@ export function CheckoutPage() {
                     </span>
                     <span className={styles.stepLabel}>{t('checkout_step_address')}</span>
                 </li>
-                <span className={styles.stepConnector} aria-hidden="true" />
+                <li className={styles.stepConnector} role="presentation" aria-hidden="true" />
                 <li
                     className={`${styles.step} ${step === 'payment' ? styles.stepActive : styles.stepUpcoming}`}
                     aria-current={step === 'payment' ? 'step' : undefined}

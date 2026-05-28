@@ -21,14 +21,6 @@
     color: var(--color-text-secondary);
 }
 
-/* Loading */
-.loadingContainer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-}
-
 /* Error */
 .errorState {
     padding: var(--spacing-2xl) 0;

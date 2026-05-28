@@ -12,8 +12,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
+    width: var(--size-2xl);
+    height: var(--size-2xl);
     margin-bottom: var(--spacing-md);
     font-size: var(--icon-2xl);
     color: var(--color-text-muted);
@@ -32,7 +32,7 @@
     max-width: 400px;
     margin: 0 0 var(--spacing-lg);
     font-size: var(--text-md);
-    line-height: 1.5;
+    line-height: var(--leading-normal);
     color: var(--color-text-secondary);
 }
 
