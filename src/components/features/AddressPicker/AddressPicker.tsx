@@ -1,4 +1,4 @@
-import { Check, MapPin } from '@phosphor-icons/react';
+import { Check, MapPin, User } from '@phosphor-icons/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -236,7 +236,12 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     partsByType['sublocality'] ??
                     current.distrito,
                 provincia: partsByType['administrative_area_level_2'] ?? current.provincia,
-                departamento: partsByType['administrative_area_level_1'] ?? current.departamento,
+                departamento:
+                    current.country === 'PE'
+                        ? matchPeDepartamento(
+                              partsByType['administrative_area_level_1'] ?? current.departamento,
+                          )
+                        : partsByType['administrative_area_level_1'] ?? current.departamento,
                 postalCode: partsByType['postal_code'] ?? current.postalCode,
                 lat: coords.lat,
                 lng: coords.lng,
@@ -675,83 +680,9 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 ) : null}
             </div>
 
-            {/* Country (defaults to Perú) */}
-            <div className={`${styles.field} ${styles.full}`}>
-                <label className={styles.label} htmlFor="addr-country">
-                    {t('address_country')}
-                    {requiredMark}
-                </label>
-                <select
-                    id="addr-country"
-                    className={styles.input}
-                    value={value.country}
-                    onChange={(e) => setField('country', e.target.value)}
-                >
-                    {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                            {t(c.nameKey)}
-                        </option>
-                    ))}
-                </select>
-                {renderError('country')}
-            </div>
-
-            {/* Recipient + Phone */}
-            <div className={styles.field}>
-                <label className={styles.label} htmlFor="addr-recipient">
-                    {t('address_recipient')}
-                    {requiredMark}
-                </label>
-                <input
-                    id="addr-recipient"
-                    className={styles.input}
-                    type="text"
-                    value={value.recipient}
-                    onChange={(e) => setField('recipient', e.target.value)}
-                    placeholder={t('address_recipient_placeholder')}
-                    autoComplete="name"
-                />
-                {renderError('recipient')}
-            </div>
-
-            <div className={styles.field}>
-                <label className={styles.label} htmlFor="addr-phone">
-                    {t('address_phone')}
-                </label>
-                <input
-                    id="addr-phone"
-                    className={styles.input}
-                    type="tel"
-                    value={value.phone}
-                    onChange={(e) => setField('phone', e.target.value)}
-                    placeholder={t('address_phone_placeholder')}
-                    autoComplete="tel"
-                    inputMode="tel"
-                />
-                {renderError('phone')}
-            </div>
-
-            {/* Detail fields caption */}
-            <p className={`${styles.full} ${styles.detailsHint}`}>{t('address_details_hint')}</p>
-
-            {/* Address line 2 — apartment / floor / reference (optional) */}
-            <div className={`${styles.field} ${styles.full}`}>
-                <label className={styles.label} htmlFor="addr-line2">
-                    {t('address_line2')}
-                </label>
-                <input
-                    id="addr-line2"
-                    className={styles.input}
-                    type="text"
-                    value={value.addressLine2}
-                    onChange={(e) => setField('addressLine2', e.target.value)}
-                    placeholder={t('address_line2_placeholder')}
-                    autoComplete="address-line2"
-                />
-                {renderError('addressLine2')}
-            </div>
-
-            {/* Distrito */}
+            {/* Location fields — order: distrito → provincia → departamento →
+                country → postal → referencia, laid out via the parent .grid
+                in a responsive 2-column layout. */}
             <div className={styles.field}>
                 <label className={styles.label} htmlFor="addr-distrito">
                     {isPeru ? t('address_distrito') : t('address_neighborhood')}
@@ -768,7 +699,6 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 {renderError('distrito')}
             </div>
 
-            {/* Provincia / City (always free text — too many to enumerate) */}
             <div className={styles.field}>
                 <label className={styles.label} htmlFor="addr-provincia">
                     {isPeru ? t('address_provincia') : t('address_city')}
@@ -785,7 +715,6 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 {renderError('provincia')}
             </div>
 
-            {/* Departamento / State */}
             <div className={styles.field}>
                 <label className={styles.label} htmlFor="addr-departamento">
                     {isPeru ? t('address_departamento') : t('address_state')}
@@ -819,7 +748,26 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 {renderError('departamento')}
             </div>
 
-            {/* Postal code */}
+            <div className={styles.field}>
+                <label className={styles.label} htmlFor="addr-country">
+                    {t('address_country')}
+                    {requiredMark}
+                </label>
+                <select
+                    id="addr-country"
+                    className={styles.input}
+                    value={value.country}
+                    onChange={(e) => setField('country', e.target.value)}
+                >
+                    {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                            {t(c.nameKey)}
+                        </option>
+                    ))}
+                </select>
+                {renderError('country')}
+            </div>
+
             <div className={styles.field}>
                 <label className={styles.label} htmlFor="addr-postal">
                     {t('address_postal_code')}
@@ -836,6 +784,69 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 />
                 {renderError('postalCode')}
             </div>
+
+            <div className={styles.field}>
+                <label className={styles.label} htmlFor="addr-line2">
+                    {t('address_line2')}
+                </label>
+                <input
+                    id="addr-line2"
+                    className={styles.input}
+                    type="text"
+                    value={value.addressLine2}
+                    onChange={(e) => setField('addressLine2', e.target.value)}
+                    placeholder={t('address_line2_placeholder')}
+                    autoComplete="address-line2"
+                />
+                {renderError('addressLine2')}
+            </div>
+
+            {/* Contact info — separate visual box with its own 2-col grid */}
+            <div className={`${styles.full} ${styles.contactBlock}`}>
+                <h3 className={styles.contactTitle}>
+                    <User
+                        size={18}
+                        weight="bold"
+                        className={styles.contactIcon}
+                        aria-hidden="true"
+                    />
+                    {t('address_contact_title')}
+                </h3>
+                <div className={styles.contactGrid}>
+                    <div className={styles.field}>
+                        <label className={styles.label} htmlFor="addr-recipient">
+                            {t('address_recipient')}
+                            {requiredMark}
+                        </label>
+                        <input
+                            id="addr-recipient"
+                            className={styles.input}
+                            type="text"
+                            value={value.recipient}
+                            onChange={(e) => setField('recipient', e.target.value)}
+                            placeholder={t('address_recipient_placeholder')}
+                            autoComplete="name"
+                        />
+                        {renderError('recipient')}
+                    </div>
+                    <div className={styles.field}>
+                        <label className={styles.label} htmlFor="addr-phone">
+                            {t('address_phone')}
+                        </label>
+                        <input
+                            id="addr-phone"
+                            className={styles.input}
+                            type="tel"
+                            value={value.phone}
+                            onChange={(e) => setField('phone', e.target.value)}
+                            placeholder={t('address_phone_placeholder')}
+                            autoComplete="tel"
+                            inputMode="tel"
+                        />
+                        {renderError('phone')}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
@@ -850,4 +861,35 @@ function streetFromFormatted(formatted?: string): string {
     const parts = formatted.split(',').map((s) => s.trim());
     if (parts.length <= 1) return parts[0] ?? '';
     return parts.slice(0, Math.max(1, parts.length - 2)).join(', ');
+}
+
+/**
+ * Strip diacritics + lowercase + trim. Used to match free-form names
+ * (e.g. Google's "Ancash", "Lima Region") against the canonical
+ * `PE_DEPARTAMENTOS` entries ("Áncash", "Lima") regardless of accents/case.
+ */
+function normalize(s: string): string {
+    return s
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .trim();
+}
+
+/**
+ * Map a Google-supplied department name onto our canonical PE departamento
+ * list so the <select> can actually highlight the value. Falls back to the
+ * input string when no fuzzy match exists.
+ */
+function matchPeDepartamento(googleName: string): string {
+    if (!googleName) return '';
+    const target = normalize(googleName);
+    // exact normalized match first
+    const exact = PE_DEPARTAMENTOS.find((d) => normalize(d) === target);
+    if (exact) return exact;
+    // tolerate Google's "X Region" / "Region X" / "Departamento de X" wrappers
+    const stripped = target
+        .replace(/\b(region|regi[oó]n|departamento(?:\s+de)?|provincia(?:\s+de)?)\b/g, '')
+        .trim();
+    return PE_DEPARTAMENTOS.find((d) => normalize(d) === stripped) ?? googleName;
 }

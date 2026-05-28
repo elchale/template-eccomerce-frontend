@@ -167,6 +167,7 @@
   "address_search_no_results": "No encontramos resultados. Sigue escribiendo o completa los campos abajo.",
   "address_details_hint": "Revisa y corrige los datos de tu dirección si es necesario.",
   "address_country": "País",
+  "address_contact_title": "Datos de contacto",
   "address_recipient": "Nombre del destinatario",
   "address_recipient_placeholder": "Escribe el nombre de quien recibe",
   "address_phone": "Teléfono",

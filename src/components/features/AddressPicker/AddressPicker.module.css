@@ -289,6 +289,44 @@
     display: none;
 }
 
+/* Contact info — a visually separate card containing recipient + phone in
+ * its own internal 2-col grid (collapses to single column at 640px). */
+.contactBlock {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-bg);
+    border: var(--border-width-sm) solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.contactTitle {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+    margin: 0;
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.contactIcon {
+    color: var(--color-text-secondary);
+}
+
+.contactGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 640px) {
+    .contactGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (width <= 600px) {
     .grid {
         grid-template-columns: 1fr;
