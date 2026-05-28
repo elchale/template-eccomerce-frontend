@@ -121,8 +121,11 @@ export const API_ROUTES = {
     checkout: '/api/checkout/',
     // Order-on-payment: a single endpoint that creates the payment AND, only
     // on confirmation, the order. The cart is the durable pre-payment state.
-    checkoutPay: '/api/checkout/pay',
-    checkoutSessionStatus: (uuid: string) => `/api/checkout/session/${uuid}/status`,
+    // Trailing slash is REQUIRED — Django APPEND_SLASH=True turns a
+    // slash-less POST into a 301 redirect, which browsers follow as a GET
+    // and the backend rejects with 405 ("Method GET not allowed").
+    checkoutPay: '/api/checkout/pay/',
+    checkoutSessionStatus: (uuid: string) => `/api/checkout/session/${uuid}/status/`,
     orders: '/api/orders/',
     orderDetail: (orderNumber: string) => `/api/orders/${orderNumber}/`,
 
