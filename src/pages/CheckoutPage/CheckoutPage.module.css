@@ -303,6 +303,13 @@
     border-bottom: 1px solid var(--color-border);
 }
 
+/* The last item's separator would sit directly on top of .summaryTotals'
+   border-top, creating a double line. Drop it so only one divider shows. */
+.summaryItem:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
 .summaryItemInfo {
     display: flex;
     flex-direction: column;
