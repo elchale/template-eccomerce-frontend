@@ -96,7 +96,7 @@
     color: var(--color-text);
 }
 
-/* Wraps the icon + input so the icon sits inside the field. */
+/* Wraps the icon + input + dropdown so they stack/position together. */
 .searchWrap {
     position: relative;
     display: flex;
@@ -123,6 +123,113 @@
     margin: 0;
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
+}
+
+/* ── Inline spinner shown inside the search input while fetching ───────── */
+.searchSpinner {
+    position: absolute;
+    right: var(--spacing-md);
+    width: var(--icon-md);
+    height: var(--icon-md);
+    border: var(--border-width-md) solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: var(--radius-full);
+    animation: addrSpin 0.7s linear infinite;
+    pointer-events: none;
+}
+
+/* ── Custom suggestions dropdown (our own list, not Google's) ──────────── */
+.dropdown {
+    position: absolute;
+    top: calc(100% + var(--spacing-xxs));
+    left: 0;
+    right: 0;
+    z-index: var(--z-dropdown);
+    max-height: 320px;
+    margin: 0;
+    padding: var(--spacing-xxs);
+    overflow-y: auto;
+    list-style: none;
+    background: var(--color-bg);
+    border: var(--border-width-sm) solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+}
+
+/* The dropdown is absolutely positioned relative to the search wrap, so the
+ * help text below stays put while suggestions overlay the content. */
+.searchBlock .searchWrap {
+    position: relative;
+}
+
+.dropdownItem {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition-base);
+}
+
+.dropdownItemActive,
+.dropdownItem:hover {
+    background: var(--color-primary-subtle);
+}
+
+.dropdownIcon {
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.dropdownTexts {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.dropdownMain {
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.dropdownSecondary {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+}
+
+/* Status row inside the dropdown: loading spinner ("Buscando…") or empty. */
+.dropdownStatus {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--text-md);
+    color: var(--color-text-secondary);
+}
+
+.spinner {
+    flex-shrink: 0;
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    border: var(--border-width-md) solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: var(--radius-full);
+    animation: addrSpin 0.7s linear infinite;
+}
+
+@keyframes addrSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .searchSpinner,
+    .spinner {
+        animation-duration: 1.6s;
+    }
 }
 
 /* Separator caption introducing the editable detail fields below. */

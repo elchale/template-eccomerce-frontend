@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next';
 
 import { COUNTRIES, DEFAULT_COUNTRY, PE_DEPARTAMENTOS } from '@/constants/addressData';
 import { loadGoogleMaps } from '@/lib/googleMapsLoader';
+import { logger } from '@/lib/logger';
 
 import styles from './AddressPicker.module.css';
+import { SuggestionsDropdown, type Suggestion } from './SuggestionsDropdown';
 
 /**
  * Internal shape held in component state. Kept separate from
@@ -53,6 +55,9 @@ export const EMPTY_ADDRESS: AddressFields = {
  * When the buyer has confirmed a pin location we append a final
  * `Ubicación: https://maps.google.com/?q=<lat>,<lng>` line so delivery can
  * open the exact point without any backend migration.
+ *
+ * NOTE: This output contract is depended on by /checkout/pay and must not
+ * change — only the way the fields get populated (the search UI) changes.
  */
 export function formatAddressForBackend(a: AddressFields): string {
     const lines: string[] = [];
@@ -102,10 +107,12 @@ function countryLabelForCode(code: string): string {
 
 /** Default map center (Lima, Perú) when no pin has been dropped yet. */
 const DEFAULT_CENTER = { lat: -12.0464, lng: -77.0428 };
-/** Bias box for Peru so suggestions surface fast (whole-country bounds). */
-const PE_BOUNDS = { south: -18.4, west: -81.4, north: -0.04, east: -68.6 };
 const PIN_ZOOM = 16;
 const OVERVIEW_ZOOM = 12;
+/** Min characters before we query Google (avoids noisy 1–2 char lookups). */
+const MIN_QUERY_LENGTH = 3;
+/** Debounce window for the suggestions fetch so typing doesn't spam Google. */
+const SEARCH_DEBOUNCE_MS = 280;
 
 interface AddressPickerProps {
     value: AddressFields;
@@ -115,23 +122,30 @@ interface AddressPickerProps {
 }
 
 /**
- * Address input with an assisted-search-first flow.
+ * Address input with an assisted-search-first flow built on the NEW Google
+ * Places API + a CUSTOM suggestions dropdown.
  *
  * Field order (top → bottom):
- *   1. A PROMINENT Google Places search ("Busca tu dirección") at the very
- *      top. Typing shows Google's suggestion dropdown; clicking ONE
- *      suggestion fills `addressLine1` + distrito / provincia / departamento
- *      / postalCode AND drops/centers the confirmation pin. Restricted +
- *      biased to the selected country (PE by default) for fast, relevant
- *      results. If `VITE_GOOGLE_MAPS_API_KEY` is missing the search box is
- *      hidden entirely and the manual fields below work as a plain form —
- *      graceful degrade, no errors.
+ *   1. A PROMINENT search ("Busca tu dirección") at the very top. Typing
+ *      debounces a call to `AutocompleteSuggestion.fetchAutocompleteSuggestions`
+ *      (region-restricted to the selected country, PE by default) and we
+ *      render OUR OWN dropdown of predictions below the input. While a fetch
+ *      is in flight the dropdown shows a LOADING SPINNER ("Buscando…") — only
+ *      possible because we own the dropdown (the classic Autocomplete widget
+ *      rendered Google's native list). Clicking ONE suggestion calls
+ *      `Place.fetchFields` to resolve its location + address components and
+ *      fills `addressLine1` + distrito / provincia / departamento /
+ *      postalCode AND drops/centers the confirmation pin. If
+ *      `VITE_GOOGLE_MAPS_API_KEY` is missing OR the new Places API isn't
+ *      available, the search box is hidden entirely and the manual fields
+ *      below work as a plain form — graceful degrade, no errors.
  *   2. The confirmation MAP with a DRAGGABLE pin + the resolved formatted
  *      address text, so the buyer can visually confirm "this is my address"
- *      and fine-tune the exact point (dragging reverse-geocodes).
+ *      and fine-tune the exact point (dragging reverse-geocodes if the
+ *      Geocoding API is enabled; if not it no-ops and just keeps lat/lng).
  *   3. Country selector (default Perú/PE, changeable). Drives whether
  *      `Departamento` is a dropdown (PE) or free text, and the search
- *      restriction/bias.
+ *      region restriction.
  *   4. Recipient name + phone.
  *   5. Manual detail fields (address line 1/2, distrito, provincia,
  *      departamento, postal code) — kept editable below for corrections.
@@ -142,16 +156,24 @@ interface AddressPickerProps {
  */
 export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     const { t } = useTranslation('shop');
-    const searchRef = useRef<HTMLInputElement>(null);
     const mapElRef = useRef<HTMLDivElement>(null);
-    const [searchReady, setSearchReady] = useState(false);
     const [mapReady, setMapReady] = useState(false);
-    // True only when a Maps API key is configured. Drives whether the whole
-    // assisted block (search + map) participates in layout at all.
+    // True only when a Maps API key + the new Places API are available.
+    // Drives whether the whole assisted block (search + map) renders at all.
     const [mapsEnabled, setMapsEnabled] = useState(false);
     const [sdkLoading, setSdkLoading] = useState(true);
     // Human-readable formatted address Google resolved for the current pin.
     const [resolvedAddress, setResolvedAddress] = useState('');
+
+    // --- Custom search dropdown state ---------------------------------
+    const [searchQuery, setSearchQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [searching, setSearching] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(-1);
+    // True once we've actually queried and got zero results (so we can show
+    // an empty-state in the dropdown rather than a stale list / spinner).
+    const [noResults, setNoResults] = useState(false);
 
     // Live Google objects. Held in refs because they outlive renders and we
     // mutate them imperatively (center, marker position, geocode).
@@ -160,11 +182,16 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     const markerRef = useRef<google.maps.Marker | null>(null);
     const geocoderRef = useRef<google.maps.Geocoder | null>(null);
 
-    // Latest-value refs so async listeners (place_changed, marker dragend)
-    // always read the CURRENT form state. Without these, a listener closes
-    // over the `value` snapshot at attach time — when the user types in
-    // other fields then picks a Google suggestion / drags the pin, the
-    // spread `...value` would discard their typing.
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Monotonic token so a slow in-flight fetch can't clobber a newer one
+    // (out-of-order responses are dropped).
+    const fetchSeqRef = useRef(0);
+
+    // Latest-value refs so async callbacks (suggestion select, marker
+    // dragend) always read the CURRENT form state. Without these, a callback
+    // closes over the `value` snapshot at attach time — when the user types
+    // in other fields then picks a suggestion / drags the pin, the spread
+    // `...value` would discard their typing.
     const valueRef = useRef(value);
     const onChangeRef = useRef(onChange);
     valueRef.current = value;
@@ -176,12 +203,12 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
 
     const isPeru = value.country === 'PE';
 
-    // Map address_components (from Places OR Geocoder) onto our fields. Only
-    // overwrites the administrative fields + coordinates; the user-typed
-    // street line is preserved unless we have a better value.
+    // Map address components (from the new Place API OR the Geocoder) onto
+    // our fields. Only overwrites the administrative fields + coordinates;
+    // the user-typed street line is preserved unless we have a better value.
     const applyComponents = useCallback(
         (
-            components: { long_name: string; types: string[] }[],
+            components: { long: string; types: string[] }[],
             coords: { lat: number; lng: number },
             formatted?: string,
             keepLine1 = false,
@@ -189,14 +216,14 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             const partsByType: Record<string, string> = {};
             for (const c of components) {
                 for (const type of c.types) {
-                    partsByType[type] = c.long_name;
+                    partsByType[type] = c.long;
                 }
             }
             const current = valueRef.current;
             const nextLine1 = keepLine1
                 ? current.addressLine1
                 : [partsByType['route'], partsByType['street_number']].filter(Boolean).join(' ') ||
-                  formatted ||
+                  streetFromFormatted(formatted) ||
                   current.addressLine1;
 
             if (formatted) setResolvedAddress(formatted);
@@ -221,89 +248,94 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
 
     // Reverse-geocode a dragged point and refresh the admin fields. Keeps
     // the typed street line (the buyer is fine-tuning the pin, not the
-    // street text) but always updates the coordinates.
+    // street text) but always updates the coordinates. If the Geocoding API
+    // isn't enabled the callback errors out and we simply persist lat/lng —
+    // saving is NEVER blocked on reverse-geocode.
     const reverseGeocode = useCallback(
         (coords: { lat: number; lng: number }) => {
             const geocoder = geocoderRef.current;
             if (!geocoder) {
-                // No geocoder (shouldn't happen if maps loaded) — at least
-                // persist the coordinates so the link is still correct.
                 onChangeRef.current({ ...valueRef.current, lat: coords.lat, lng: coords.lng });
                 return;
             }
-            geocoder.geocode({ location: coords }, (results, status) => {
-                if (status === 'OK' && results?.[0]) {
-                    applyComponents(results[0].address_components, coords, results[0].formatted_address, true);
-                } else {
-                    onChangeRef.current({ ...valueRef.current, lat: coords.lat, lng: coords.lng });
-                }
-            });
+            try {
+                geocoder.geocode({ location: coords }, (results, status) => {
+                    if (status === 'OK' && results?.[0]) {
+                        const mapped = results[0].address_components.map((c) => ({
+                            long: c.long_name,
+                            types: c.types,
+                        }));
+                        applyComponents(mapped, coords, results[0].formatted_address, true);
+                    } else {
+                        onChangeRef.current({ ...valueRef.current, lat: coords.lat, lng: coords.lng });
+                    }
+                });
+            } catch {
+                onChangeRef.current({ ...valueRef.current, lat: coords.lat, lng: coords.lng });
+            }
         },
         [applyComponents],
     );
 
     // Move (or create) the pin and recenter the map.
-    const placePin = useCallback((coords: { lat: number; lng: number }) => {
-        const maps = mapsRef.current;
-        const map = mapRef.current;
-        if (!maps || !map) return;
+    const placePin = useCallback(
+        (coords: { lat: number; lng: number }) => {
+            const maps = mapsRef.current;
+            const map = mapRef.current;
+            if (!maps || !map) return;
 
-        map.setCenter(coords);
-        map.setZoom(PIN_ZOOM);
+            map.setCenter(coords);
+            map.setZoom(PIN_ZOOM);
 
-        if (!markerRef.current) {
-            markerRef.current = new maps.Marker({
-                position: coords,
-                map,
-                draggable: true,
-            });
-            markerRef.current.addListener('dragend', (e: google.maps.MapMouseEvent) => {
-                if (!e.latLng) return;
-                reverseGeocode({ lat: e.latLng.lat(), lng: e.latLng.lng() });
-            });
-        } else {
-            markerRef.current.setPosition(coords);
-        }
-    }, [reverseGeocode]);
+            if (!markerRef.current) {
+                markerRef.current = new maps.Marker({
+                    position: coords,
+                    map,
+                    draggable: true,
+                });
+                markerRef.current.addListener('dragend', (e: google.maps.MapMouseEvent) => {
+                    if (!e.latLng) return;
+                    reverseGeocode({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+                });
+            } else {
+                markerRef.current.setPosition(coords);
+            }
+        },
+        [reverseGeocode],
+    );
 
-    // Attach Google Places autocomplete + initialise the map once the SDK is
-    // available. Effect re-runs when the country changes so the search bias
-    // updates. We intentionally only depend on `value.country` — re-binding
-    // on every keystroke would be wasteful; the latest-value refs above keep
-    // the closures honest.
+    // Initialise the SDK + map once on mount. The NEW Places API is queried
+    // imperatively per keystroke (see fetchSuggestions) rather than bound to
+    // the input, so this effect only needs to run once.
     useEffect(() => {
         let cancelled = false;
-        let autocomplete: google.maps.places.Autocomplete | null = null;
-        let listener: google.maps.MapsEventListener | null = null;
         let clickListener: google.maps.MapsEventListener | null = null;
 
         loadGoogleMaps().then((maps) => {
             if (cancelled) return;
-            if (!maps) {
-                // No API key / load failure — graceful degrade. Hide the
-                // assisted block; the manual fields below remain fully usable.
-                setSdkLoading(false);
-                return;
-            }
-            if (!searchRef.current) {
+            // No API key / load failure, OR the new Places API isn't present
+            // on this project — graceful degrade. Hide the assisted block;
+            // the manual fields below remain fully usable, no errors.
+            if (!maps?.places?.AutocompleteSuggestion || !maps.places.Place) {
                 setSdkLoading(false);
                 return;
             }
 
             mapsRef.current = maps;
-            geocoderRef.current = new maps.Geocoder();
+            try {
+                geocoderRef.current = new maps.Geocoder();
+            } catch {
+                // Geocoding API may be disabled — pin drag will just keep
+                // coordinates without reverse-geocoding. Not fatal.
+                geocoderRef.current = null;
+            }
             setMapsEnabled(true);
 
             // --- Map + draggable pin -------------------------------------
             if (mapElRef.current && !mapRef.current) {
-                const start =
-                    typeof valueRef.current.lat === 'number' &&
-                    typeof valueRef.current.lng === 'number'
-                        ? { lat: valueRef.current.lat, lng: valueRef.current.lng }
-                        : DEFAULT_CENTER;
-                const hasPin =
-                    typeof valueRef.current.lat === 'number' &&
-                    typeof valueRef.current.lng === 'number';
+                const { lat, lng } = valueRef.current;
+                const hasPin = typeof lat === 'number' && typeof lng === 'number';
+                const start = hasPin ? { lat, lng } : DEFAULT_CENTER;
 
                 mapRef.current = new maps.Map(mapElRef.current, {
                     center: start,
@@ -318,11 +350,17 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     placePin(start);
                     // Best-effort: resolve text for a pin that arrived via
                     // restored form state so the confirm line isn't blank.
-                    geocoderRef.current.geocode({ location: start }, (results, status) => {
-                        if (!cancelled && status === 'OK' && results?.[0]) {
-                            setResolvedAddress(results[0].formatted_address);
+                    if (geocoderRef.current) {
+                        try {
+                            geocoderRef.current.geocode({ location: start }, (results, status) => {
+                                if (!cancelled && status === 'OK' && results?.[0]) {
+                                    setResolvedAddress(results[0].formatted_address);
+                                }
+                            });
+                        } catch {
+                            /* no-op: confirm line stays from typed fields */
                         }
-                    });
+                    }
                 }
 
                 // Let the buyer tap anywhere on the map to move the pin too.
@@ -336,65 +374,162 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 if (!cancelled) setMapReady(true);
             }
 
-            // --- Places autocomplete (the prominent top search) ----------
-            const restrictions =
-                value.country === 'OTHER' ? undefined : { country: value.country.toLowerCase() };
-            autocomplete = new maps.places.Autocomplete(searchRef.current, {
-                fields: ['address_components', 'formatted_address', 'geometry'],
-                types: ['address'],
-                ...(restrictions && { componentRestrictions: restrictions }),
-                // Bias toward Peru's bounds for faster, more relevant hits.
-                ...(value.country === 'PE' && { bounds: PE_BOUNDS }),
-            });
-
-            listener = autocomplete.addListener('place_changed', () => {
-                if (!autocomplete) return;
-                const place = autocomplete.getPlace();
-                if (!place.address_components) return;
-
-                const loc = place.geometry?.location;
-                const coords = loc ? { lat: loc.lat(), lng: loc.lng() } : null;
-
-                if (coords) {
-                    applyComponents(place.address_components, coords, place.formatted_address);
-                    placePin(coords);
-                } else {
-                    // No geometry (rare) — fill fields without moving the pin.
-                    applyComponents(
-                        place.address_components,
-                        { lat: valueRef.current.lat ?? DEFAULT_CENTER.lat, lng: valueRef.current.lng ?? DEFAULT_CENTER.lng },
-                        place.formatted_address,
-                    );
-                }
-
-                // Clear the search box after a pick: the chosen address now
-                // lives in the detail fields + the map confirm line, and an
-                // empty search invites another lookup if needed.
-                if (searchRef.current) searchRef.current.value = '';
-            });
-
-            if (!cancelled) {
-                setSearchReady(true);
-                setSdkLoading(false);
-            }
+            if (!cancelled) setSdkLoading(false);
         });
 
         return () => {
             cancelled = true;
-            // Tear down the listeners + dropdown container Google appends to
-            // <body>. Without this, switching country (or unmounting the
-            // checkout) leaks Autocomplete instances + their pac-container
-            // popovers — each one keeps a reference to the input element
-            // and a place_changed listener that still fires.
+            if (debounceRef.current) clearTimeout(debounceRef.current);
             const ev = window.google?.maps?.event;
-            if (ev) {
-                if (listener) ev.removeListener(listener);
-                if (clickListener) ev.removeListener(clickListener);
-                if (autocomplete) ev.clearInstanceListeners(autocomplete);
-            }
+            if (ev && clickListener) ev.removeListener(clickListener);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value.country]);
+    }, []);
+
+    // Query the NEW Places API for predictions, restricted to the selected
+    // country. Uses a sequence token to ignore out-of-order responses.
+    const fetchSuggestions = useCallback(async (input: string, country: string) => {
+        const maps = mapsRef.current;
+        if (!maps?.places?.AutocompleteSuggestion) return;
+
+        const seq = ++fetchSeqRef.current;
+        setSearching(true);
+        setNoResults(false);
+
+        try {
+            const request: google.maps.places.AutocompleteRequest = { input };
+            if (country !== 'OTHER') request.includedRegionCodes = [country.toLowerCase()];
+
+            const { suggestions: raw } =
+                await maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+
+            // A newer query already started — drop this stale response.
+            if (seq !== fetchSeqRef.current) return;
+
+            const items: Suggestion[] = raw.flatMap((s) => {
+                const p = s.placePrediction;
+                if (!p) return [];
+                return [
+                    {
+                        placeId: p.placeId,
+                        main: p.mainText?.text ?? p.text?.text ?? '',
+                        secondary: p.secondaryText?.text ?? '',
+                    },
+                ];
+            });
+
+            setSuggestions(items);
+            setNoResults(items.length === 0);
+            setShowDropdown(true);
+            setActiveIndex(-1);
+        } catch (error) {
+            if (seq !== fetchSeqRef.current) return;
+            // Likely the Places API (New) isn't enabled — degrade quietly:
+            // empty the dropdown, no toast, manual fields still work.
+            logger.debug('Places autocomplete fetch failed', error);
+            setSuggestions([]);
+            setNoResults(true);
+            setShowDropdown(true);
+        } finally {
+            if (seq === fetchSeqRef.current) setSearching(false);
+        }
+    }, []);
+
+    const handleSearchChange = (next: string) => {
+        setSearchQuery(next);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        const trimmed = next.trim();
+        if (trimmed.length < MIN_QUERY_LENGTH) {
+            // Too short — clear and hide the dropdown, cancel any pending hit.
+            fetchSeqRef.current++;
+            setSuggestions([]);
+            setNoResults(false);
+            setSearching(false);
+            setShowDropdown(false);
+            return;
+        }
+
+        // Show the dropdown immediately with the spinner; the debounced fetch
+        // fills it. This gives instant "Buscando…" feedback.
+        setSearching(true);
+        setShowDropdown(true);
+        const country = valueRef.current.country;
+        debounceRef.current = setTimeout(() => {
+            void fetchSuggestions(trimmed, country);
+        }, SEARCH_DEBOUNCE_MS);
+    };
+
+    // Resolve a selected suggestion to its full place + fill the form.
+    const selectSuggestion = useCallback(
+        async (suggestion: Suggestion) => {
+            const maps = mapsRef.current;
+            if (!maps?.places?.Place) return;
+
+            // Reflect the choice in the input, then close the dropdown.
+            setSearchQuery([suggestion.main, suggestion.secondary].filter(Boolean).join(', '));
+            setShowDropdown(false);
+            setSuggestions([]);
+            setNoResults(false);
+            setActiveIndex(-1);
+
+            try {
+                const place = new maps.places.Place({ id: suggestion.placeId });
+                await place.fetchFields({
+                    fields: ['location', 'addressComponents', 'formattedAddress'],
+                });
+
+                const loc = place.location;
+                const coords = loc
+                    ? { lat: loc.lat(), lng: loc.lng() }
+                    : {
+                          lat: valueRef.current.lat ?? DEFAULT_CENTER.lat,
+                          lng: valueRef.current.lng ?? DEFAULT_CENTER.lng,
+                      };
+
+                const components = (place.addressComponents ?? []).map((c) => ({
+                    long: c.longText ?? c.shortText ?? '',
+                    types: c.types,
+                }));
+
+                applyComponents(components, coords, place.formattedAddress ?? undefined);
+                if (loc) placePin(coords);
+            } catch (error) {
+                // fetchFields can fail if the Places API (New) Details call
+                // isn't enabled. Don't block the buyer: keep their typed
+                // text in the field; they can fill the detail fields manually.
+                logger.debug('Place.fetchFields failed', error);
+            }
+        },
+        [applyComponents, placePin],
+    );
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (!showDropdown || suggestions.length === 0) return;
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setActiveIndex((i) => (i + 1) % suggestions.length);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+                break;
+            case 'Enter': {
+                const picked = activeIndex >= 0 ? suggestions[activeIndex] : undefined;
+                if (picked) {
+                    e.preventDefault();
+                    void selectSuggestion(picked);
+                }
+                break;
+            }
+            case 'Escape':
+                setShowDropdown(false);
+                break;
+            default:
+                break;
+        }
+    };
 
     const departamentoOptions = useMemo(
         () => PE_DEPARTAMENTOS.map((d) => ({ value: d, label: d })),
@@ -422,14 +557,17 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             .filter(Boolean)
             .join(', ');
 
+    const dropdownOpen = showDropdown && (searching || suggestions.length > 0 || noResults);
+
     return (
         <div className={styles.grid}>
             {/*
-                Assisted search FIRST. Only rendered when the Maps SDK is
-                configured. While the SDK loads we show a disabled, loading
-                placeholder so the field doesn't pop in. With no API key the
-                whole block is omitted (graceful degrade) and the buyer uses
-                the manual detail fields below.
+                Assisted search FIRST. Only rendered when the Maps SDK + the
+                new Places API are available. While the SDK loads we show a
+                disabled, loading placeholder so the field doesn't pop in.
+                With no API key (or no new Places API) the whole block is
+                omitted (graceful degrade) and the buyer uses the manual
+                detail fields below — no errors.
             */}
             {sdkLoading ? (
                 <div className={`${styles.field} ${styles.full} ${styles.searchBlock}`}>
@@ -454,9 +592,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 <div className={`${styles.field} ${styles.full} ${styles.searchBlock}`}>
                     <label className={styles.searchLabel} htmlFor="addr-search">
                         {t('address_search_label')}
-                        {searchReady ? (
-                            <span className={styles.assistTag}>{t('address_autocomplete_hint')}</span>
-                        ) : null}
+                        <span className={styles.assistTag}>{t('address_autocomplete_hint')}</span>
                     </label>
                     <div className={styles.searchWrap}>
                         <span className={styles.searchIcon} aria-hidden="true">
@@ -464,14 +600,43 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                         </span>
                         <input
                             id="addr-search"
-                            ref={searchRef}
                             className={`${styles.input} ${styles.searchInput}`}
                             type="text"
+                            value={searchQuery}
+                            onChange={(e) => handleSearchChange(e.target.value)}
+                            onFocus={() => {
+                                if (suggestions.length > 0 || searching) setShowDropdown(true);
+                            }}
+                            onBlur={() => {
+                                // Delay so a click on an option (mousedown) wins
+                                // before the dropdown unmounts.
+                                window.setTimeout(() => setShowDropdown(false), 150);
+                            }}
                             placeholder={t('address_search_placeholder')}
                             autoComplete="off"
+                            role="combobox"
+                            aria-expanded={dropdownOpen}
+                            aria-controls="addr-search-listbox"
+                            aria-autocomplete="list"
+                            aria-busy={searching}
                             aria-label={t('address_search_label')}
+                            onKeyDown={handleSearchKeyDown}
                         />
+                        {searching ? (
+                            <span className={styles.searchSpinner} aria-hidden="true" />
+                        ) : null}
                     </div>
+
+                    {dropdownOpen ? (
+                        <SuggestionsDropdown
+                            suggestions={suggestions}
+                            searching={searching}
+                            noResults={noResults}
+                            activeIndex={activeIndex}
+                            onHover={setActiveIndex}
+                            onSelect={(s) => void selectSuggestion(s)}
+                        />
+                    ) : null}
                     <p className={styles.searchHelp}>{t('address_search_help')}</p>
                 </div>
             ) : null}
@@ -687,4 +852,16 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             </div>
         </div>
     );
+}
+
+/**
+ * Heuristic: derive a street line from a full formatted address when Google
+ * gives us no `route`/`street_number` components — take everything before the
+ * last two comma-separated chunks (which are usually city + country).
+ */
+function streetFromFormatted(formatted?: string): string {
+    if (!formatted) return '';
+    const parts = formatted.split(',').map((s) => s.trim());
+    if (parts.length <= 1) return parts[0] ?? '';
+    return parts.slice(0, Math.max(1, parts.length - 2)).join(', ');
 }

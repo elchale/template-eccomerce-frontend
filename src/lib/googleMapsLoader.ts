@@ -157,20 +157,6 @@ declare global {
             }
 
             namespace places {
-                class Autocomplete {
-                    constructor(input: HTMLInputElement, opts?: AutocompleteOptions);
-                    addListener(name: string, fn: () => void): MapsEventListener;
-                    getPlace(): PlaceResult;
-                    setFields(fields: string[]): void;
-                }
-                interface AutocompleteOptions {
-                    fields?: string[];
-                    types?: string[];
-                    componentRestrictions?: { country: string | string[] };
-                    // A LatLngBoundsLiteral that biases (not restricts)
-                    // suggestions toward a geographic box.
-                    bounds?: { north: number; south: number; east: number; west: number };
-                }
                 interface PlaceResult {
                     formatted_address?: string;
                     address_components?: {
@@ -180,7 +166,72 @@ declare global {
                     }[];
                     geometry?: { location?: { lat(): number; lng(): number } };
                 }
+
+                // ── New Places API (Places API "New") ──────────────────
+                // `AutocompleteSuggestion.fetchAutocompleteSuggestions`
+                // returns lightweight predictions we render in our OWN
+                // dropdown (so we can show a loading spinner). Selecting one
+                // creates a `Place` by id and `fetchFields` resolves its
+                // location + structured address components.
+                interface AutocompleteRequest {
+                    input: string;
+                    includedRegionCodes?: string[];
+                    language?: string;
+                    region?: string;
+                }
+
+                interface PlacePredictionText {
+                    text: string;
+                }
+
+                interface PlacePrediction {
+                    placeId: string;
+                    mainText?: PlacePredictionText | null;
+                    secondaryText?: PlacePredictionText | null;
+                    text?: PlacePredictionText | null;
+                }
+
+                interface AutocompleteSuggestionResult {
+                    placePrediction: PlacePrediction | null;
+                }
+
+                interface FetchAutocompleteSuggestionsResponse {
+                    suggestions: AutocompleteSuggestionResult[];
+                }
+
+                // Modelled as a value (not a static-only class) so it lints
+                // clean while still exposing the static factory the runtime
+                // SDK provides at `google.maps.places.AutocompleteSuggestion`.
+                const AutocompleteSuggestion: {
+                    fetchAutocompleteSuggestions(
+                        request: AutocompleteRequest,
+                    ): Promise<FetchAutocompleteSuggestionsResponse>;
+                };
+
+                interface PlaceAddressComponent {
+                    longText: string | null;
+                    shortText: string | null;
+                    types: string[];
+                }
+
+                interface FetchFieldsRequest {
+                    fields: string[];
+                }
+
+                class Place {
+                    constructor(options: { id: string });
+                    fetchFields(request: FetchFieldsRequest): Promise<{ place: Place }>;
+                    location?: LatLng | null;
+                    formattedAddress?: string | null;
+                    addressComponents?: PlaceAddressComponent[] | null;
+                }
             }
+
+            // ── New marker library (AdvancedMarkerElement) ─────────────
+            // The legacy `google.maps.Marker` still works, but the new
+            // Places bundle ships AdvancedMarkerElement; we keep the legacy
+            // Marker typing above (still used) and don't depend on the new
+            // marker here to avoid requiring a Map ID.
         }
     }
 

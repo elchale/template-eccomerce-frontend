@@ -162,6 +162,8 @@
   "address_search_placeholder": "Start typing your street and pick an option",
   "address_search_help": "Pick a suggestion and we'll fill in your address and the map for you.",
   "address_search_loading": "Loading the address search...",
+  "address_search_searching": "Searching…",
+  "address_search_no_results": "No results found. Keep typing or fill in the fields below.",
   "address_details_hint": "Review and correct your address details if needed.",
   "address_country": "Country",
   "address_recipient": "Recipient name",

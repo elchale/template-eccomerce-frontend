@@ -162,6 +162,8 @@
   "address_search_placeholder": "Comece a digitar sua rua e escolha uma opção",
   "address_search_help": "Escolha uma sugestão e preencheremos seu endereço e o mapa para você.",
   "address_search_loading": "Carregando a busca de endereços...",
+  "address_search_searching": "Buscando…",
+  "address_search_no_results": "Nenhum resultado encontrado. Continue digitando ou preencha os campos abaixo.",
   "address_details_hint": "Revise e corrija os dados do seu endereço se necessário.",
   "address_country": "País",
   "address_recipient": "Nome do destinatário",
