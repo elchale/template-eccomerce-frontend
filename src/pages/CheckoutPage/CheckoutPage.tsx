@@ -577,11 +577,9 @@ export function CheckoutPage() {
                                         onError={handlePaymentError}
                                     />
                                 )}
-
-                                <p className={styles.secureRow}>
-                                    <LockKey size={14} weight="bold" aria-hidden="true" />
-                                    {t('payment_secure_note_gateway', { gateway: 'Mercado Pago' })}
-                                </p>
+                                {/* The security note lives inside <MercadoPagoForm>
+                                    itself — do NOT render it again here or it
+                                    would appear duplicated. */}
                             </div>
                         </>
                     )}
