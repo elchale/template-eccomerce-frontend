@@ -45,48 +45,89 @@ export function loadGoogleMaps(): Promise<GoogleMapsNamespace | null> {
         return inflight;
     }
 
-    inflight = new Promise<GoogleMapsNamespace | null>((resolve) => {
-        const script = document.createElement('script');
-        // `loading=async` enables the modern async bootstrap. We still pass
-        // libraries via the URL for back-compat, but we ALSO call
-        // `importLibrary` explicitly below — the new Places API
-        // (AutocompleteSuggestion, Place) is only attached to the namespace
-        // after that import resolves. Without it, `google.maps.places` exists
-        // but `AutocompleteSuggestion`/`Place` are `undefined`, our
-        // `mapsEnabled` flag stays false, and the picker silently degrades.
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places,marker&loading=async`;
-        script.async = true;
-        script.defer = true;
-        script.onload = async () => {
-            const maps = window.google?.maps;
-            if (!maps) {
-                resolve(null);
-                return;
+    inflight = (async (): Promise<GoogleMapsNamespace | null> => {
+        try {
+            // Install Google's official bootstrap loader. It defines
+            // google.maps.importLibrary(name) which lazily injects the SDK
+            // script with the right libraries on the first call. This is the
+            // canonical way to use the new Places API (AutocompleteSuggestion,
+            // Place) — passing ?libraries=places on the legacy URL is NOT
+            // enough; those classes only attach after the bootstrap-style
+            // importLibrary resolves.
+            if (typeof window === 'undefined') return null;
+            const w = window as unknown as {
+                google?: { maps?: { importLibrary?: (n: string) => Promise<unknown> } };
+            };
+            if (!w.google?.maps?.importLibrary) {
+                installBootstrapLoader(apiKey);
             }
-            // Make sure the new Places API + marker library are actually
-            // attached. Wrapped in try/catch so a single failing library
-            // never breaks the whole resolution (the AddressPicker degrades
-            // gracefully when these aren't there).
-            try {
-                if (typeof maps.importLibrary === 'function') {
-                    await maps.importLibrary('places');
-                    await maps.importLibrary('marker');
-                }
-            } catch {
-                // Library import failed — fall through and let callers
-                // detect the missing classes via their own runtime checks.
-            }
-            if (window.google?.maps?.places) {
-                resolve(window.google.maps);
-            } else {
-                resolve(null);
-            }
-        };
-        script.onerror = () => resolve(null);
-        document.head.appendChild(script);
-    });
+            // Force the libraries we need. The bootstrap collects them in a
+            // set and lazily loads the SDK script with libraries=all-of-them
+            // on the FIRST call, so we kick off `maps` first to trigger the
+            // load, then await the others.
+            await w.google!.maps!.importLibrary!('maps');
+            await w.google!.maps!.importLibrary!('places');
+            await w.google!.maps!.importLibrary!('marker');
+            return window.google?.maps ?? null;
+        } catch {
+            return null;
+        }
+    })();
 
     return inflight;
+}
+
+/**
+ * Installs Google's bootstrap shim — defines `google.maps.importLibrary(name)`
+ * which lazily loads the SDK on first call. Transcribed from the official
+ * inline snippet at
+ * https://developers.google.com/maps/documentation/javascript/load-maps-js-api
+ * (Dynamic Library Import), expanded for readability and TypeScript.
+ */
+function installBootstrapLoader(apiKey: string): void {
+    const config: Record<string, string> = { key: apiKey, v: 'weekly' };
+    const m = document;
+    const w = window as unknown as Record<string, unknown>;
+    const googleObj = (w.google as Record<string, unknown>) ?? (w.google = {});
+    const mapsObj = (googleObj.maps as Record<string, unknown>) ?? (googleObj.maps = {});
+    const requested = new Set<string>();
+    const params = new URLSearchParams();
+    let scriptPromise: Promise<void> | undefined;
+
+    const ensureScript = (): Promise<void> => {
+        if (scriptPromise) return scriptPromise;
+        scriptPromise = new Promise<void>((resolve, reject) => {
+            const script = m.createElement('script');
+            params.set('libraries', [...requested].join(','));
+            for (const [k, v] of Object.entries(config)) {
+                // Google's snippet converts camelCase keys to snake_case URL
+                // params (e.g. mapIds -> map_ids); we do the same for safety.
+                params.set(k.replace(/[A-Z]/g, (t) => '_' + t.charAt(0).toLowerCase()), v);
+            }
+            params.set('callback', 'google.maps.__ib__');
+            script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+            (mapsObj as Record<string, unknown>).__ib__ = resolve;
+            script.onerror = () => reject(new Error('Google Maps JS could not load'));
+            const existingNonce = (m.querySelector('script[nonce]') as HTMLScriptElement | null)
+                ?.nonce;
+            if (existingNonce) script.nonce = existingNonce;
+            m.head.append(script);
+        });
+        return scriptPromise;
+    };
+
+    (mapsObj as Record<string, unknown>).importLibrary = (name: string, ...rest: string[]) => {
+        requested.add(name);
+        return ensureScript().then(() => {
+            // After the SDK is loaded it overwrites mapsObj.importLibrary with
+            // the real one; re-invoke that to actually get the library back.
+            const real = (mapsObj as Record<string, unknown>).importLibrary as (
+                n: string,
+                ...r: string[]
+            ) => Promise<unknown>;
+            return real(name, ...rest);
+        });
+    };
 }
 
 /**
