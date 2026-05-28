@@ -122,36 +122,35 @@ interface AddressPickerProps {
 }
 
 /**
- * Address input with an assisted-search-first flow built on the NEW Google
- * Places API + a CUSTOM suggestions dropdown.
+ * Address input with a single, address-first flow.
  *
- * Field order (top → bottom):
- *   1. A PROMINENT search ("Busca tu dirección") at the very top. Typing
- *      debounces a call to `AutocompleteSuggestion.fetchAutocompleteSuggestions`
- *      (region-restricted to the selected country, PE by default) and we
- *      render OUR OWN dropdown of predictions below the input. While a fetch
- *      is in flight the dropdown shows a LOADING SPINNER ("Buscando…") — only
- *      possible because we own the dropdown (the classic Autocomplete widget
- *      rendered Google's native list). Clicking ONE suggestion calls
- *      `Place.fetchFields` to resolve its location + address components and
- *      fills `addressLine1` + distrito / provincia / departamento /
- *      postalCode AND drops/centers the confirmation pin. If
- *      `VITE_GOOGLE_MAPS_API_KEY` is missing OR the new Places API isn't
- *      available, the search box is hidden entirely and the manual fields
- *      below work as a plain form — graceful degrade, no errors.
- *   2. The confirmation MAP with a DRAGGABLE pin + the resolved formatted
- *      address text, so the buyer can visually confirm "this is my address"
- *      and fine-tune the exact point (dragging reverse-geocodes if the
- *      Geocoding API is enabled; if not it no-ops and just keeps lat/lng).
- *   3. Country selector (default Perú/PE, changeable). Drives whether
- *      `Departamento` is a dropdown (PE) or free text, and the search
- *      region restriction.
+ * Field order (top → bottom) — STABLE regardless of Google Maps SDK state:
+ *   1. The "Dirección completa" input. ALWAYS the first visible field, with
+ *      a big tap target (~52px) and required asterisk. This single input IS
+ *      the `addressLine1` form field.
+ *      • When the Maps SDK + new Places API are available, typing in it
+ *        debounces a call to `AutocompleteSuggestion.fetchAutocompleteSuggestions`
+ *        and our custom dropdown renders below with predictions + a loading
+ *        spinner. Selecting a suggestion calls `Place.fetchFields` and fills
+ *        distrito / provincia / departamento / postalCode + drops the map pin.
+ *      • When the SDK is missing (no API key) OR fails to load OR the new
+ *        Places API isn't available, the same input is a plain controlled
+ *        text input — no dropdown, no spinner, no map. The buyer fills the
+ *        detail fields below manually. No errors, no layout shift: this
+ *        field stays first.
+ *      • While the SDK is STILL loading (first paint) it already renders as
+ *        a normal text input — we just don't attach autocomplete yet. The
+ *        buyer never sees a "weird disabled placeholder" flash that turns
+ *        into the real input after the loader resolves.
+ *   2. The confirmation MAP with a DRAGGABLE pin (only when the SDK is ready
+ *      AND the buyer has selected a suggestion / dragged a point).
+ *   3. Country selector (default Perú/PE, changeable).
  *   4. Recipient name + phone.
- *   5. Manual detail fields (address line 1/2, distrito, provincia,
- *      departamento, postal code) — kept editable below for corrections.
+ *   5. Detail fields: line2 (departamento/piso/referencia), distrito,
+ *      provincia, departamento (PE = dropdown), postal code.
  *
- * The component is controlled. Parents own the state; we just call
- * `onChange` with a fresh `AddressFields` whenever any field updates, and
+ * The component is controlled. Parents own the state; we call `onChange`
+ * with a fresh `AddressFields` on every field update, and
  * `formatAddressForBackend(value)` produces the string the backend expects.
  */
 export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
@@ -159,14 +158,13 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
     const mapElRef = useRef<HTMLDivElement>(null);
     const [mapReady, setMapReady] = useState(false);
     // True only when a Maps API key + the new Places API are available.
-    // Drives whether the whole assisted block (search + map) renders at all.
+    // Drives whether the top input attaches autocomplete behavior and the
+    // confirmation map renders. Field order does NOT depend on this.
     const [mapsEnabled, setMapsEnabled] = useState(false);
-    const [sdkLoading, setSdkLoading] = useState(true);
     // Human-readable formatted address Google resolved for the current pin.
     const [resolvedAddress, setResolvedAddress] = useState('');
 
     // --- Custom search dropdown state ---------------------------------
-    const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [searching, setSearching] = useState(false);
@@ -314,10 +312,10 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
         loadGoogleMaps().then((maps) => {
             if (cancelled) return;
             // No API key / load failure, OR the new Places API isn't present
-            // on this project — graceful degrade. Hide the assisted block;
-            // the manual fields below remain fully usable, no errors.
+            // on this project — graceful degrade. The top "Dirección completa"
+            // input stays exactly where it is and works as a plain text
+            // field; the manual detail fields below remain fully usable.
             if (!maps?.places?.AutocompleteSuggestion || !maps.places.Place) {
-                setSdkLoading(false);
                 return;
             }
 
@@ -373,8 +371,6 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
 
                 if (!cancelled) setMapReady(true);
             }
-
-            if (!cancelled) setSdkLoading(false);
         });
 
         return () => {
@@ -435,8 +431,17 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
         }
     }, []);
 
-    const handleSearchChange = (next: string) => {
-        setSearchQuery(next);
+    /**
+     * Single handler for the "Dirección completa" input. Always updates the
+     * controlled `addressLine1` field. When the SDK is wired up, ALSO debounces
+     * an autocomplete fetch and toggles the dropdown / spinner. With the SDK
+     * off, the rest is a no-op — the input behaves like a plain text field.
+     */
+    const handleAddressLine1Change = (next: string) => {
+        setField('addressLine1', next);
+
+        if (!mapsEnabled) return;
+
         if (debounceRef.current) clearTimeout(debounceRef.current);
 
         const trimmed = next.trim();
@@ -466,8 +471,9 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             const maps = mapsRef.current;
             if (!maps?.places?.Place) return;
 
-            // Reflect the choice in the input, then close the dropdown.
-            setSearchQuery([suggestion.main, suggestion.secondary].filter(Boolean).join(', '));
+            // Reflect the choice in the address input, then close the dropdown.
+            const composed = [suggestion.main, suggestion.secondary].filter(Boolean).join(', ');
+            onChangeRef.current({ ...valueRef.current, addressLine1: composed });
             setShowDropdown(false);
             setSuggestions([]);
             setNoResults(false);
@@ -504,7 +510,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
         [applyComponents, placePin],
     );
 
-    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleAddressKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (!showDropdown || suggestions.length === 0) return;
         switch (e.key) {
             case 'ArrowDown':
@@ -557,75 +563,63 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
             .filter(Boolean)
             .join(', ');
 
-    const dropdownOpen = showDropdown && (searching || suggestions.length > 0 || noResults);
+    const dropdownOpen =
+        mapsEnabled && showDropdown && (searching || suggestions.length > 0 || noResults);
 
     return (
         <div className={styles.grid}>
             {/*
-                Assisted search FIRST. Only rendered when the Maps SDK + the
-                new Places API are available. While the SDK loads we show a
-                disabled, loading placeholder so the field doesn't pop in.
-                With no API key (or no new Places API) the whole block is
-                omitted (graceful degrade) and the buyer uses the manual
-                detail fields below — no errors.
+                Dirección completa — ALWAYS FIRST. Single prominent input that
+                doubles as the autocomplete trigger when the Maps SDK is wired
+                up. With no SDK / on load failure, it stays a plain controlled
+                text input — no errors, no layout shift, no spinner. The field
+                order below is identical regardless of SDK state.
             */}
-            {sdkLoading ? (
-                <div className={`${styles.field} ${styles.full} ${styles.searchBlock}`}>
-                    <label className={styles.searchLabel} htmlFor="addr-search">
-                        {t('address_search_label')}
-                    </label>
-                    <div className={styles.searchWrap}>
-                        <span className={styles.searchIcon} aria-hidden="true">
-                            📍
-                        </span>
-                        <input
-                            id="addr-search"
-                            className={`${styles.input} ${styles.searchInput}`}
-                            type="text"
-                            disabled
-                            placeholder={t('address_search_loading')}
-                            aria-busy="true"
-                        />
-                    </div>
-                </div>
-            ) : mapsEnabled ? (
-                <div className={`${styles.field} ${styles.full} ${styles.searchBlock}`}>
-                    <label className={styles.searchLabel} htmlFor="addr-search">
-                        {t('address_search_label')}
+            <div className={`${styles.field} ${styles.full} ${styles.addressBlock}`}>
+                <label className={styles.addressLabel} htmlFor="addr-line1">
+                    {t('address_line1')}
+                    {requiredMark}
+                    {mapsEnabled ? (
                         <span className={styles.assistTag}>{t('address_autocomplete_hint')}</span>
-                    </label>
-                    <div className={styles.searchWrap}>
-                        <span className={styles.searchIcon} aria-hidden="true">
-                            📍
-                        </span>
-                        <input
-                            id="addr-search"
-                            className={`${styles.input} ${styles.searchInput}`}
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => handleSearchChange(e.target.value)}
-                            onFocus={() => {
-                                if (suggestions.length > 0 || searching) setShowDropdown(true);
-                            }}
-                            onBlur={() => {
-                                // Delay so a click on an option (mousedown) wins
-                                // before the dropdown unmounts.
-                                window.setTimeout(() => setShowDropdown(false), 150);
-                            }}
-                            placeholder={t('address_search_placeholder')}
-                            autoComplete="off"
-                            role="combobox"
-                            aria-expanded={dropdownOpen}
-                            aria-controls="addr-search-listbox"
-                            aria-autocomplete="list"
-                            aria-busy={searching}
-                            aria-label={t('address_search_label')}
-                            onKeyDown={handleSearchKeyDown}
-                        />
-                        {searching ? (
-                            <span className={styles.searchSpinner} aria-hidden="true" />
-                        ) : null}
-                    </div>
+                    ) : null}
+                </label>
+                <div className={styles.addressWrap}>
+                    <span className={styles.addressIcon} aria-hidden="true">
+                        📍
+                    </span>
+                    <input
+                        id="addr-line1"
+                        className={`${styles.input} ${styles.addressInput}`}
+                        type="text"
+                        value={value.addressLine1}
+                        onChange={(e) => handleAddressLine1Change(e.target.value)}
+                        onFocus={() => {
+                            if (mapsEnabled && (suggestions.length > 0 || searching)) {
+                                setShowDropdown(true);
+                            }
+                        }}
+                        onBlur={() => {
+                            // Delay so a click on an option (mousedown) wins
+                            // before the dropdown unmounts.
+                            window.setTimeout(() => setShowDropdown(false), 150);
+                        }}
+                        placeholder={t('address_line1_placeholder')}
+                        autoComplete="address-line1"
+                        aria-required="true"
+                        {...(mapsEnabled
+                            ? {
+                                  role: 'combobox',
+                                  'aria-expanded': dropdownOpen,
+                                  'aria-controls': 'addr-search-listbox',
+                                  'aria-autocomplete': 'list' as const,
+                                  'aria-busy': searching,
+                                  onKeyDown: handleAddressKeyDown,
+                              }
+                            : {})}
+                    />
+                    {mapsEnabled && searching ? (
+                        <span className={styles.searchSpinner} aria-hidden="true" />
+                    ) : null}
 
                     {dropdownOpen ? (
                         <SuggestionsDropdown
@@ -637,15 +631,18 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                             onSelect={(s) => void selectSuggestion(s)}
                         />
                     ) : null}
-                    <p className={styles.searchHelp}>{t('address_search_help')}</p>
                 </div>
-            ) : null}
+                <p className={styles.addressHelp}>
+                    {mapsEnabled ? t('address_search_help') : t('address_manual_hint')}
+                </p>
+                {renderError('addressLine1')}
+            </div>
 
             {/*
                 Visual confirmation map. Only rendered when the Maps SDK is
                 configured (mapReady). With no API key the loader resolves to
-                null, this block stays hidden, and the form works exactly as
-                before — graceful degrade, no errors.
+                null, this block stays hidden, and the form works exactly the
+                same — graceful degrade, no errors.
             */}
             <div className={`${styles.field} ${styles.full} ${mapReady ? '' : styles.hidden}`}>
                 <label className={styles.label} htmlFor="addr-map">
@@ -671,7 +668,7 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 ) : null}
             </div>
 
-            {/* Country (after the assisted search; defaults to Perú) */}
+            {/* Country (defaults to Perú) */}
             <div className={`${styles.field} ${styles.full}`}>
                 <label className={styles.label} htmlFor="addr-country">
                     {t('address_country')}
@@ -727,28 +724,10 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                 {renderError('phone')}
             </div>
 
-            {/* Manual detail fields (for corrections after the assisted pick) */}
+            {/* Detail fields caption */}
             <p className={`${styles.full} ${styles.detailsHint}`}>{t('address_details_hint')}</p>
 
-            {/* Address line 1 */}
-            <div className={`${styles.field} ${styles.full}`}>
-                <label className={styles.label} htmlFor="addr-line1">
-                    {t('address_line1')}
-                    {requiredMark}
-                </label>
-                <input
-                    id="addr-line1"
-                    className={styles.input}
-                    type="text"
-                    value={value.addressLine1}
-                    onChange={(e) => setField('addressLine1', e.target.value)}
-                    placeholder={t('address_line1_placeholder')}
-                    autoComplete="address-line1"
-                />
-                {renderError('addressLine1')}
-            </div>
-
-            {/* Address line 2 */}
+            {/* Address line 2 — apartment / floor / reference (optional) */}
             <div className={`${styles.field} ${styles.full}`}>
                 <label className={styles.label} htmlFor="addr-line2">
                     {t('address_line2')}
@@ -763,6 +742,40 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     autoComplete="address-line2"
                 />
                 {renderError('addressLine2')}
+            </div>
+
+            {/* Distrito */}
+            <div className={styles.field}>
+                <label className={styles.label} htmlFor="addr-distrito">
+                    {isPeru ? t('address_distrito') : t('address_neighborhood')}
+                </label>
+                <input
+                    id="addr-distrito"
+                    className={styles.input}
+                    type="text"
+                    value={value.distrito}
+                    onChange={(e) => setField('distrito', e.target.value)}
+                    placeholder={t('address_distrito_placeholder')}
+                    autoComplete="address-level3"
+                />
+                {renderError('distrito')}
+            </div>
+
+            {/* Provincia / City (always free text — too many to enumerate) */}
+            <div className={styles.field}>
+                <label className={styles.label} htmlFor="addr-provincia">
+                    {isPeru ? t('address_provincia') : t('address_city')}
+                </label>
+                <input
+                    id="addr-provincia"
+                    className={styles.input}
+                    type="text"
+                    value={value.provincia}
+                    onChange={(e) => setField('provincia', e.target.value)}
+                    placeholder={t('address_provincia_placeholder')}
+                    autoComplete="address-level2"
+                />
+                {renderError('provincia')}
             </div>
 
             {/* Departamento / State */}
@@ -797,40 +810,6 @@ export function AddressPicker({ value, onChange, errors }: AddressPickerProps) {
                     />
                 )}
                 {renderError('departamento')}
-            </div>
-
-            {/* Provincia / City (always free text — too many to enumerate) */}
-            <div className={styles.field}>
-                <label className={styles.label} htmlFor="addr-provincia">
-                    {isPeru ? t('address_provincia') : t('address_city')}
-                </label>
-                <input
-                    id="addr-provincia"
-                    className={styles.input}
-                    type="text"
-                    value={value.provincia}
-                    onChange={(e) => setField('provincia', e.target.value)}
-                    placeholder={t('address_provincia_placeholder')}
-                    autoComplete="address-level2"
-                />
-                {renderError('provincia')}
-            </div>
-
-            {/* Distrito */}
-            <div className={styles.field}>
-                <label className={styles.label} htmlFor="addr-distrito">
-                    {isPeru ? t('address_distrito') : t('address_neighborhood')}
-                </label>
-                <input
-                    id="addr-distrito"
-                    className={styles.input}
-                    type="text"
-                    value={value.distrito}
-                    onChange={(e) => setField('distrito', e.target.value)}
-                    placeholder={t('address_distrito_placeholder')}
-                    autoComplete="address-level3"
-                />
-                {renderError('distrito')}
             </div>
 
             {/* Postal code */}

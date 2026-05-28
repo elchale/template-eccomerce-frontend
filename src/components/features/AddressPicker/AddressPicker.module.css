@@ -75,10 +75,13 @@
     color: var(--color-error);
 }
 
-/* ── Assisted search (the prominent, first thing the buyer sees) ───────── */
-
-/* A highlighted card so the assisted search visually leads the form. */
-.searchBlock {
+/* ── Dirección completa block (always the first visible field) ───────────
+ * Highlighted card so the address-first input visually leads the form.
+ * The same block hosts both the autocomplete-enabled and the plain-text
+ * variants — the visual treatment is identical so the SDK loading transition
+ * does not cause a layout flash.
+ */
+.addressBlock {
     gap: var(--spacing-sm);
     padding: var(--spacing-md);
     background: var(--color-primary-subtle);
@@ -86,7 +89,7 @@
     border-radius: var(--radius-lg);
 }
 
-.searchLabel {
+.addressLabel {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-xs);
@@ -97,13 +100,13 @@
 }
 
 /* Wraps the icon + input + dropdown so they stack/position together. */
-.searchWrap {
+.addressWrap {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-.searchIcon {
+.addressIcon {
     position: absolute;
     left: var(--spacing-md);
     font-size: var(--text-lg);
@@ -111,15 +114,15 @@
     pointer-events: none;
 }
 
-/* Larger search input with room for the leading icon. */
-.searchInput {
+/* Larger prominent input with room for the leading icon. */
+.addressInput {
     min-height: 52px;
     padding-left: var(--spacing-3xl);
     font-size: var(--text-lg);
     background: var(--color-bg);
 }
 
-.searchHelp {
+.addressHelp {
     margin: 0;
     font-size: var(--text-sm);
     color: var(--color-text-secondary);
@@ -156,9 +159,9 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* The dropdown is absolutely positioned relative to the search wrap, so the
+/* The dropdown is absolutely positioned relative to the address wrap, so the
  * help text below stays put while suggestions overlay the content. */
-.searchBlock .searchWrap {
+.addressBlock .addressWrap {
     position: relative;
 }
 
