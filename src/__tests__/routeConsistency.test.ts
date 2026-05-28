@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, it, expect } from 'vitest';
@@ -117,5 +117,45 @@ describe('API_ROUTES: trailing-slash invariant (Django APPEND_SLASH)', () => {
         expect(typeof sample).toBe('string');
         expect(sample.startsWith('/')).toBe(true);
         expect(sample.endsWith('/')).toBe(true);
+    });
+});
+
+/**
+ * Anti-hardcode guard. Every hook in `src/api/` and every Zustand store in
+ * `src/stores/` must pass the URL via `API_ROUTES.x` — never an inline
+ * `'/api/...'` or `'/auth/...'` literal. An inline string is exactly how the
+ * checkout/pay trailing-slash bug shipped: nothing tied the call site to the
+ * single source of truth, so the convention drifted. This test scans those
+ * folders and fails on any new offender.
+ */
+describe('api hooks + stores never hardcode URL literals', () => {
+    const ROOTS = ['src/api', 'src/stores'];
+    const SCAN_EXT = new Set(['.ts', '.tsx']);
+
+    function collectFiles(dir: string, out: string[] = []): string[] {
+        if (!statSync(path.join(process.cwd(), dir), { throwIfNoEntry: false })) return out;
+        for (const entry of readdirSync(path.join(process.cwd(), dir), { withFileTypes: true })) {
+            const rel = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                collectFiles(rel, out);
+            } else if (SCAN_EXT.has(path.extname(entry.name))) {
+                out.push(rel);
+            }
+        }
+        return out;
+    }
+
+    const files = ROOTS.flatMap((r) => collectFiles(r));
+
+    it.each(files)('%s has no inline /api/ or /auth/ string literal', (rel) => {
+        const source = readFileSync(path.join(process.cwd(), rel), 'utf8');
+        // Strip comments so a doc example doesn't trip the check.
+        const stripped = source
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
+        const offender = /['"`]\/(?:api|auth|resend)\//.exec(stripped);
+        // If this fails: replace the literal with `API_ROUTES.something`. If
+        // the path doesn't have an entry yet, ADD one to `constants/routes.ts`.
+        expect(offender, `inline URL literal in ${rel}: ${offender?.[0]}`).toBeNull();
     });
 });

@@ -6,6 +6,7 @@
  */
 import { useQuery } from '@tanstack/react-query';
 
+import { API_ROUTES } from '@/constants/routes';
 import { api } from '@/lib/axios';
 import type { User } from '@/types/auth';
 
@@ -25,7 +26,7 @@ export function useMe(options?: UseMeOptions) {
     return useQuery({
         queryKey: KEYS.detail(),
         queryFn: async () => {
-            const { data } = await api.get<User>('/auth/user/');
+            const { data } = await api.get<User>(API_ROUTES.me);
             return data;
         },
         staleTime: 30_000,

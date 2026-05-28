@@ -89,6 +89,7 @@ export const API_ROUTES = {
     googleLogin: '/auth/google/',
     login: '/auth/login/',
     logout: '/auth/logout/',
+    me: '/auth/user/',
     refresh: '/auth/token/refresh/',
     signup: '/auth/registration/',
     resendEmail: '/resend-email-confirmation/',
